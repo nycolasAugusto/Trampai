@@ -45,6 +45,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     irParaRelampago = {
                                         telaAtual = 5
+                                    },
+                                    irParaPerfil =
+                                        { telaAtual = 6
                                     }
                             )
 
@@ -73,6 +76,10 @@ class MainActivity : ComponentActivity() {
                                     voltarParaInicio = {
                                         telaAtual = 1
                                     }
+                            )
+
+                            6 -> TelaPerfil(
+                                voltarParaInicio = { telaAtual = 1 }
                             )
                         }
                     }

@@ -1,0 +1,201 @@
+package com.example.trampai
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+@Composable
+fun TelaPerfil(
+    voltarParaInicio: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5))
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+
+        // TOPO: título + setinha de voltar no canto direito
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Meu Perfil",
+                color = Color(0xFF5A4FCF),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .clickable { voltarParaInicio() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "←",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF5A4FCF)
+                )
+            }
+        }
+
+        // CARD PRINCIPAL: avatar + informações
+        CardPerfilPrincipal(
+            nome = "Alex Souza",
+            email = "alex.souza@email.com",
+            local = "📍 Copacabana, RJ"
+        )
+
+        // TÍTULO DA SEÇÃO
+        Text(
+            text = "RESUMO",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray,
+            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
+        )
+
+        // GRADE 2x2 DE CARDS
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CardInfo(
+                modifier = Modifier.weight(1f),
+                icone = "📋",
+                titulo = "Serviços",
+                valor = "12"
+            )
+            CardInfo(
+                modifier = Modifier.weight(1f),
+                icone = "⭐",
+                titulo = "Avaliação",
+                valor = "4.9"
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CardInfo(
+                modifier = Modifier.weight(1f),
+                icone = "❤️",
+                titulo = "Favoritos",
+                valor = "8"
+            )
+            CardInfo(
+                modifier = Modifier.weight(1f),
+                icone = "💬",
+                titulo = "Mensagens",
+                valor = "3"
+            )
+        }
+    }
+}
+
+// COMPOSABLE: Card com avatar à esquerda e textos à direita
+@Composable
+fun CardPerfilPrincipal(nome: String, email: String, local: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 24.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Avatar simulado (círculo com a inicial)
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .background(Color(0xFF5A4FCF), shape = CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = nome.first().toString(),
+                color = Color.White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Column(modifier = Modifier.padding(start = 16.dp)) {
+            Text(
+                text = nome,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Text(
+                text = email,
+                fontSize = 13.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            Text(
+                text = local,
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+// COMPOSABLE: Card pequeno de informação
+@Composable
+fun CardInfo(modifier: Modifier = Modifier, icone: String, titulo: String, valor: String) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White)
+            .height(110.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = icone, fontSize = 22.sp)
+
+        Column {
+            Text(
+                text = valor,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF5A4FCF)
+            )
+            Text(
+                text = titulo,
+                fontSize = 13.sp,
+                color = Color.DarkGray
+            )
+        }
+    }
+}
