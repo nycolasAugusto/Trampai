@@ -25,7 +25,8 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun TelaPerfil(
-    voltarParaInicio: () -> Unit
+    voltarParaInicio: () -> Unit,
+    verPropostas: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -116,6 +117,40 @@ fun TelaPerfil(
                 icone = "💬",
                 titulo = "Mensagens",
                 valor = "3"
+            )
+        }
+
+        // CARD: Propostas de Servidores (abre a tela de propostas)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.White)
+                .clickable { verPropostas() }
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Propostas de Servidores",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Text(
+                    text = "Veja quem quer atender seus serviços",
+                    fontSize = 13.sp,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+            Text(
+                text = "›",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF5A4FCF)
             )
         }
     }

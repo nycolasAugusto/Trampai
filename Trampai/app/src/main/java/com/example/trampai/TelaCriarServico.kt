@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TelaDois(voltarParaInicio: () -> Unit, irParaRelampago: () -> Unit) {
+fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: () -> Unit) {
     // Paleta de cores extraída da imagem
     val corFundo = Color(0xFFF5F5F5)
     val corDestaqueAmarelo = Color(0xFF5A4FCF)
@@ -159,7 +159,7 @@ fun TelaDois(voltarParaInicio: () -> Unit, irParaRelampago: () -> Unit) {
                 .padding(horizontal = 16.dp)
         ) {
             Button(
-                onClick = irParaRelampago,
+                onClick = aoPublicar,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),

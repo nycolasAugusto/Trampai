@@ -15,7 +15,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun TelaServicoRelampago(voltarParaInicio: () -> Unit) {
+fun TelaServicoRelampago(
+    voltarParaInicio: () -> Unit,
+    aoAceitar: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -90,7 +93,7 @@ fun TelaServicoRelampago(voltarParaInicio: () -> Unit) {
 
                     // BOTÃO ACEITAR
                     Button(
-                        onClick = { /* Ação de aceitar */ },
+                        onClick = aoAceitar,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                         modifier = Modifier.weight(1f).padding(start = 8.dp),
                         shape = RoundedCornerShape(12.dp)
@@ -100,7 +103,7 @@ fun TelaServicoRelampago(voltarParaInicio: () -> Unit) {
                 }
 
                 // DETALHES DO SERVIÇO
-                Divider(modifier = Modifier.padding(vertical = 20.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 20.dp))
 
                 InfoRow(label = "📍 Distância", value = "0.8 km (5 min)")
                 InfoRow(label = "💰 Valor Estimado", value = "R$ 45,00")

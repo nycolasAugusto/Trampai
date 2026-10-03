@@ -1,6 +1,7 @@
 package com.example.trampai
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,7 +19,10 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaBuscaServicos(voltarParaInicio: () -> Unit) {
+fun TelaBuscaServicos(
+    voltarParaInicio: () -> Unit,
+    aoSelecionarCategoria: () -> Unit = {}
+) {
     var searchText by remember { mutableStateOf("") }
 
     val categorias = listOf(
@@ -67,18 +71,22 @@ fun TelaBuscaServicos(voltarParaInicio: () -> Unit) {
             modifier = Modifier.fillMaxSize()
         ) {
             items(categorias) { categoria ->
-                CardCategoria(categoria)
+                CardCategoria(
+                    nome = categoria,
+                    onClick = aoSelecionarCategoria
+                )
             }
         }
     }
 }
 
 @Composable
-fun CardCategoria(nome: String) {
+fun CardCategoria(nome: String, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .aspectRatio(1f)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
