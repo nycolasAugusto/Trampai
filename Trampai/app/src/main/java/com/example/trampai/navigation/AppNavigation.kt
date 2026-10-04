@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.trampai.MeuViewModel
 import com.example.trampai.TelaDescricaoServico
 import com.example.trampai.TelaPropostasServidores
 
@@ -18,7 +22,7 @@ import com.example.trampai.TelaPropostasServidores
 fun AppNavigation() {
 
     val navController = rememberNavController()
-    val viewModel: MeuViewModel = viewModel()
+    val viewModel: MeuViewModel = MeuViewModel()
 
     NavHost(
         navController = navController,
@@ -31,28 +35,40 @@ fun AppNavigation() {
         }
 
         // Home (card) -> Descrição do Serviço
-        composable(Rotas.DESCRICAO) {
-            TelaCheia {
-                TelaDescricaoServico(
-                    voltarParaInicio = { navController.popBackStack() },
-                    verPropostas = { navController.navigate(Rotas.PROPOSTAS) }
-                )
+        composable(
+            route = Rotas.DESCRICAO,
+            arguments = listOf(navArgument("servicoId") { type = NavType.IntType })
+        ) { entry ->
+            val id = entry.arguments?.getInt("servicoId") ?: 0
+            val servico = viewModel.buscarServico(id)
+
+            if (servico != null) {
+                TelaCheia {
+                    TelaDescricaoServico(
+                        servico = servico,
+                        qtdPropostas = viewModel.propostas.count { it.servicoId == servico.id },
+                        voltarParaInicio = { navController.popBackStack() },
+                        aoEnviarProposta = { proposta ->
+                            viewModel.adicionarProposta(proposta)
+                            navController.navigate(Rotas.PROPOSTAS)
+                        }
+                    )
+                }
             }
         }
 
-        // Perfil (card) ou Descrição (botão) -> Propostas de Servidores
         composable(Rotas.PROPOSTAS) {
             TelaCheia {
                 TelaPropostasServidores(
-                    voltarParaInicio = { navController.popBackStack() },
-                    aoSelecionarProfissional = {
-                        // PENDENTE: tela de detalhe do profissional (próxima etapa)
-                    }
+                    propostas = viewModel.propostas,
+                    aoRemover = { viewModel.removerProposta(it) },
+                    voltarParaInicio = { navController.popBackStack() }
                 )
             }
         }
+        }
     }
-}
+
 
 // Telas cheias não usam Scaffold, então respeitam as barras do sistema aqui
 @Composable

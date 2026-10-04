@@ -1,216 +1,138 @@
 package com.example.trampai
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+private val roxo = Color(0xFF5A4FCF)
+
 @Composable
-fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: () -> Unit) {
-    // Paleta de cores extraída da imagem
-    val corFundo = Color(0xFFF5F5F5)
-    val corDestaqueAmarelo = Color(0xFF5A4FCF)
-    val corTextoLabel = Color(0xFFE5D5C5)
-    val corBordaCaixa = Color(0xFF5A4FCF)
+fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit) {
+    var titulo by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf("") }
+    var valor by remember { mutableStateOf("") }
+    var descricao by remember { mutableStateOf("") }
+    var requisitos by remember { mutableStateOf("") }
+    var localizacao by remember { mutableStateOf("") }
+    var erro by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(corFundo)
-            .padding(top = 16.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .background(Color(0xFFF5F5F5))
+            .imePadding()
+            .padding(vertical = 16.dp)
     ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+        // CABEÇALHO
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // CABEÇALHO
-            Row(
+            Text("Criar Serviço", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = roxo)
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .size(36.dp)
+                    .background(roxo, RoundedCornerShape(12.dp))
+                    .clickable { voltarParaInicio() },
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Criar Serviço",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = corTextoLabel
-                )
-
-                // Botão "X" amarelo
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(corDestaqueAmarelo, RoundedCornerShape(12.dp))
-                        .clickable { voltarParaInicio() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "x",
-                        fontSize = 18.sp,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            // FORMULÁRIO
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp)
-            ) {
-                CampoFormularioDark(
-                    titulo = "Título do Serviço",
-                    conteudo = "Ex: Poda de Árvores e Paisagismo",
-                    corBorda = corBordaCaixa
-                )
-
-                CampoFormularioDark(
-                    titulo = "Categoria",
-                    conteudo = "Ex: Limpeza e Manutenção Externa",
-                    corBorda = corBordaCaixa
-                )
-
-                CampoFormularioDark(
-                    titulo = "Valor / Orçamento",
-                    conteudo = "R$ 50,00 / hora",
-                    corBorda = corBordaCaixa
-                )
-
-                CampoFormularioDark(
-                    titulo = "Descrição",
-                    conteudo = "Descreva o serviço e os detalhes",
-                    corBorda = corBordaCaixa
-                )
-
-                CampoFormularioDark(
-                    titulo = "Requisitos Especiais",
-                    conteudo = "Ex: ferramentas necessárias",
-                    corBorda = corBordaCaixa
-                )
-
-                CampoFormularioDark(
-                    titulo = "Localização",
-                    conteudo = "Apenas cidade do serviço",
-                    corBorda = corBordaCaixa
-                )
-
-                // Campo "Anexos" (Visual preenchido, sem borda fina)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                ) {
-                    Text(
-                        text = "Anexos",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = corTextoLabel,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(45.dp)
-                            .background(Color(0xFF3B3026), RoundedCornerShape(8.dp)),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "Espaço para adicionar anexos",
-                            fontSize = 13.sp,
-                            color = Color(0xFFAFA59B)
-                        )
-                    }
-                }
+                Text("x", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
 
-        // BOTÃO INFERIOR
-        Box(
+        // FORMULÁRIO
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            Campo("Título do Serviço", titulo, { titulo = it })
+            Campo("Categoria (ex: Limpeza)", categoria, { categoria = it })
+            Campo("Valor por hora (R$)", valor, { valor = it }, KeyboardType.Decimal)
+            Campo("Descrição", descricao, { descricao = it }, linhas = 3)
+            Campo("Requisitos Especiais", requisitos, { requisitos = it })
+            Campo("Localização (cidade)", localizacao, { localizacao = it })
+        }
+
+        // ERRO + BOTÃO
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            if (erro.isNotEmpty()) {
+                Text(erro, color = Color(0xFFD32F2F), fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+            }
             Button(
-                onClick = aoPublicar,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = corDestaqueAmarelo),
+                onClick = {
+                    val valorNumero = valor.replace(",", ".").toDoubleOrNull()
+                    erro = when {
+                        titulo.isBlank() -> "Informe o título do serviço."
+                        categoria.isBlank() -> "Informe a categoria."
+                        valorNumero == null || valorNumero <= 0 -> "Informe um valor válido, ex: 50 ou 50,50."
+                        else -> ""
+                    }
+                    if (erro.isEmpty() && valorNumero != null) {
+                        aoPublicar(
+                            Servico(
+                                id = 0, // o ViewModel define o id
+                                titulo = titulo.trim(),
+                                categoria = categoria.trim(),
+                                valorHora = valorNumero,
+                                descricao = descricao.trim(),
+                                requisitos = requisitos.trim(),
+                                localizacao = localizacao.trim().ifBlank { "Local não informado" },
+                                autor = "Alex Souza"
+                            )
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = roxo),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(
-                    text = "Publicar Serviço",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Publicar Serviço", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
-// COMPOSABLE 2: Campos de formulário com altura e margens reduzidas
 @Composable
-fun CampoFormularioDark(
-    titulo: String,
-    conteudo: String,
-    corBorda: Color
+private fun Campo(
+    nome: String,
+    valor: String,
+    aoMudar: (String) -> Unit,
+    teclado: KeyboardType = KeyboardType.Text,
+    linhas: Int = 1
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp) // Margem inferior reduzida
-    ) {
-        Text(
-            text = titulo,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFE5D5C5), // Bege claro
-            modifier = Modifier.padding(bottom = 4.dp) // Distância menor entre label e input
+    OutlinedTextField(
+        value = valor,
+        onValueChange = aoMudar,
+        label = { Text(nome) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = linhas == 1,
+        minLines = linhas,
+        keyboardOptions = KeyboardOptions(keyboardType = teclado),
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            focusedBorderColor = roxo,
+            unfocusedBorderColor = roxo.copy(alpha = 0.5f),
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black
         )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(38.dp) // Altura do input reduzida
-                .border(1.dp, corBorda, RoundedCornerShape(4.dp)) // Borda sutil
-                .background(Color.Transparent)
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically // Centraliza o texto verticalmente
-        ) {
-            Text(
-                text = conteudo,
-                fontSize = 13.sp,
-                color = Color(0xFFAFA59B) // Texto do placeholder (cinza/marrom claro)
-            )
-        }
-    }
+    )
 }

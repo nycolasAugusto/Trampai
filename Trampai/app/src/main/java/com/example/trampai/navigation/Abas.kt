@@ -2,6 +2,7 @@ package com.example.trampai.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import com.example.trampai.MeuViewModel
 import com.example.trampai.TelaBuscaServicos
 import com.example.trampai.TelaCriarServico
 import com.example.trampai.TelaHome
@@ -13,12 +14,18 @@ import com.example.trampai.TelaServicoRelampago
 //  - navController -> navegar para telas CHEIAS (Descrição, Propostas)
 
 @Composable
-fun AbaInicio(navController: NavHostController, navInterno: NavHostController) {
+fun AbaInicio(
+    navController: NavHostController,
+    navInterno: NavHostController,
+    viewModel: MeuViewModel
+) {
     TelaHome(
+        servicos = viewModel.servicos,
+        aoRemover = { viewModel.removerServico(it) },
         irParaBusca = { navInterno.irParaAba(Rotas.ABA_BUSCA) },
         irParaPerfil = { navInterno.irParaAba(Rotas.ABA_PERFIL) },
         irParaUrgente = { navInterno.irParaAba(Rotas.ABA_URGENTE) },
-        irParaDescricao = { navController.navigate(Rotas.DESCRICAO) }
+        irParaDescricao = { id -> navController.navigate(Rotas.descricao(id)) }
     )
 }
 
@@ -31,10 +38,13 @@ fun AbaBusca(navController: NavHostController, navInterno: NavHostController) {
 }
 
 @Composable
-fun AbaCriar(navInterno: NavHostController) {
+fun AbaCriar(navInterno: NavHostController, viewModel: MeuViewModel) {
     TelaCriarServico(
         voltarParaInicio = { navInterno.irParaAba(Rotas.ABA_INICIO) },
-        aoPublicar = { navInterno.irParaAba(Rotas.ABA_INICIO) }
+        aoPublicar = { servico ->
+            viewModel.adicionarServico(servico)
+            navInterno.irParaAba(Rotas.ABA_INICIO)
+        }
     )
 }
 
@@ -42,7 +52,7 @@ fun AbaCriar(navInterno: NavHostController) {
 fun AbaUrgente(navController: NavHostController, navInterno: NavHostController) {
     TelaServicoRelampago(
         voltarParaInicio = { navInterno.irParaAba(Rotas.ABA_INICIO) },
-        aoAceitar = { navController.navigate(Rotas.DESCRICAO) }
+        aoAceitar = { navController.navigate(Rotas.descricao(1)) }
     )
 }
 
