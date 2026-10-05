@@ -79,3 +79,5 @@ Para atender ao requisito avançado da Seção 3.2 (fazer mais do que apenas ree
 > 3. `print_detalhes_servico.png` — Tela de Detalhes (`TelaDescricaoServico`) mostrando o cálculo de propostas.
 > 4. `print_propostas.png` — Tela de Lista de Propostas (`TelaPropostasServidores`).
 > 5. `print_bottom_bar.png` — Navegação pelas abas inferiores (`NavigationBar`).
+
+![alt text](image.png)
