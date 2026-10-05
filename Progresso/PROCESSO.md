@@ -1,83 +1,90 @@
 # 📜 PROCESSO.md — Documentação, Histórico e Decisões do Projeto (Trampai)
 
-Este documento detalha o processo de desenvolvimento do aplicativo **Trampai (Taskly)**, respondendo às diretrizes da **Seção 4** da especificação do trabalho (Histórico de decisões, Antes x Depois, Telas novas, Arquitetura, Complexidade extra e Resolução de dificuldades).
+Este documento detalha o processo de desenvolvimento do aplicativo **Trampai**, respondendo às diretrizes da especificação do trabalho com o histórico de decisões, mudanças e dificuldades.
 
 ---
 
-## 1. Como estava o projeto no Trabalho 1, e o que mudou para chegar até aqui? (ANTES x DEPOIS)
+## 🎬 Demonstração em Vídeo
 
-| Critério / Aspecto | Trabalho 1 (Versão Anterior) | Trabalho 2 (Versão Atual) |
+Abaixo estão os vídeos demonstrando a evolução e as decisões do projeto:
+
+* **Vídeo 1 - Versão 1 do App:** [Cole o link do seu vídeo aqui]
+* **Vídeo 2 - Escolhas Feitas na Versão 2:** [Cole o link do seu vídeo aqui]
+
+---
+
+## 1. Como estava o projeto no Trabalho 1, e o que mudou para chegar até aqui?
+
+| Critério | Trabalho 1 (Versão Anterior) | Trabalho 2 (Versão Atual) |
 | :--- | :--- | :--- |
-| **Estado dos Dados** | Estático, mockado em variáveis fixas (val) ou sem reatividade. | Totalmente reativo utilizando `mutableStateListOf` dentro de um `ViewModel` centralizado. |
-| **Modelos de Dados** | Apenas 1 tipo de item genérico. | **2 Data Classes distintas:** `Servico` e `Proposta`, permitindo relacionamento lógico entre entidades. |
-| **Listas & Exibição** | Listagens simples ou estáticas sem interatividade real. | Duas telas de lista completas utilizando `LazyColumn` + `Card`, com suporte a exclusão em tempo real. |
-| **Entrada de Dados (Formulários)** | Apenas visualização, sem campos de cadastro funcionais. | Formulários interativos com `OutlinedTextField`, validação de preenchimento e botão de cadastro funcional. |
-| **Navegação** | Apenas troca simples de telas sem parâmetros. | **NavHost** robusto com objeto `Rotas`, passagem de argumentos por rota (`servicoId`) e `BottomNavigation` (`NavigationBar`) funcional mantendo o estado das abas. |
-| **Telas de Detalhes** | Inexistente ou apenas exibia texto estático. | **2 Telas de Detalhes/Gestão**, sendo que a principal (`TelaDescricaoServico`) realiza cálculos dinâmicos e combina dados das duas listas. |
-
-```mermaid
-graph LR
-    subgraph Trabalho 1
-        A[Telas Estáticas / Mock] --> B[Navegação Básica]
-    end
-    subgraph Trabalho 2
-        C[ViewModel & mutableStateListOf] --> D[2 Data Classes: Servico & Proposta]
-        D --> E[Listas LazyColumn + Formulários]
-        E --> F[NavHost Central + BottomBar + Argumentos]
-        F --> G[Detalhes com Lógica Calculada]
-    end
-```
+| **Dados** | Estático, mockado em variáveis fixas ou sem reatividade. | Totalmente reativo utilizando `mutableStateListOf` num `ViewModel`. |
+| **Modelos** | 1 tipo de item genérico. | **2 Data Classes:** `Servico` e `Proposta`, com relacionamento. |
+| **Listas** | Listagens estáticas. | Duas telas de lista com `LazyColumn` + suporte a exclusão. |
+| **Inputs** | Sem campos funcionais. | Formulários interativos para criar serviços e enviar propostas. |
+| **Navegação**| Troca simples de tela. | **NavHost** completo com Bottom Navigation e passagem de argumentos. |
 
 ---
 
-## 2. Por que essas telas novas? O que cada uma faz e por que o trio escolheu?
+## 2. Por que essas telas novas — o que cada uma faz e por que o trio escolheu elas?
 
-O aplicativo foi expandido para **7 telas navegáveis**, escolhidas para refletir o ecossistema real de um conector de serviços (Cliente x Prestador):
+Para refletir um aplicativo real de conexão entre clientes e prestadores, expandimos as telas e criamos um fluxo completo. Abaixo estão as telas escolhidas e nossos esboços:
 
-1. **Aba Início (`TelaHome` - Lista 1):** Exibe a lista reativa de serviços disponíveis. Escolhida para ser o ponto central onde o usuário visualiza rapidamente as demandas ativas.
-2. **Aba Buscar (`TelaBuscaServicos`):** Permite filtrar serviços por categoria. Essencial para a usabilidade em aplicativos de prestação de serviços.
-3. **Aba Criar (`TelaCriarServico`):** O formulário interativo de cadastro de novos serviços. Escolhida para cumprir a exigência de adicionar itens dinamicamente pela UI.
-4. **Aba Urgente (`TelaServicoRelampago`):** Simula chamados emergenciais em tempo real.
-5. **Aba Perfil (`TelaPerfil`):** Centraliza os dados do usuário logado e oferece atalhos para gerenciar propostas.
-6. **Tela de Descrição do Serviço (`TelaDescricaoServico` - Detalhe 1):** Aberta ao clicar em um serviço da lista (passando o ID por argumento de rota). Mostra todos os detalhes e permite enviar propostas.
-7. **Tela de Propostas de Servidores (`TelaPropostasServidores` - Lista 2 e Gestão):** Lista os orçamentos/propostas enviadas para os serviços, permitindo remover propostas cadastradas.
+### Esboço Inicial das Telas
+![Esboço Telas](materiaisProgesso/EsboçoTelas.png)
+
+### Telas do Aplicativo:
+
+**1. Aba Início (Tela Home)**
+Exibe a lista reativa de serviços disponíveis. Foi escolhida para ser o ponto central onde o usuário visualiza rapidamente as demandas ativas.
+![Tela Home](materiaisProgesso/telaHome2.0.png)
+
+**2. Aba Buscar**
+Permite filtrar ou procurar serviços específicos, essencial para a usabilidade de um marketplace de serviços.
+![Tela Buscar](materiaisProgesso/TelaBuscarServico2.0.png)
+
+**3. Aba Criar Serviço**
+O formulário para cadastrar novos serviços. Cumpre a exigência de adicionar itens dinamicamente pela interface.
+![Tela Criar Serviço](materiaisProgesso/TelaCriarServico2.0.png)
+
+**4. Aba Urgente (Job Urgente)**
+Aba dedicada para destacar chamados emergenciais.
+![Tela Job Urgente](materiaisProgesso/TelaJOburgente2.0.png)
+
+**5. Aba Meu Perfil**
+Centraliza os dados do usuário e permite a gestão do aplicativo.
+![Tela Meu Perfil](materiaisProgesso/telaMeuPerfil2.0.png)
+
+**6. Telas de Gestão de Propostas**
+Lista os orçamentos/propostas enviadas para os serviços, permitindo gerenciar e remover propostas cadastradas.
+![Tela Propostas 1](materiaisProgesso/telaPropostas2.0-1.png)
+![Tela Propostas 2](materiaisProgesso/telaPropostas2.0-2.png)
 
 ---
 
 ## 3. Que decisão de configuração/organização do código o trio tomou, e por quê?
 
-* **Organização das Rotas (`Rotas.kt`):** Criamos um objeto central `Rotas` com constantes `const val` para evitar erros de digitação de strings nas navegações e incluímos funções auxiliares (como `Rotas.descricao(id)`) para injetar parâmetros de rota de forma limpa.
-* **NavHost Aninhado (`AppNavigation` vs. `MinhaTela`):** 
-  * O `AppNavigation` gerencia as telas de nível superior (como a Tela de Detalhes e a Tela de Propostas).
-  * O `MinhaTela` gerencia um `NavHost` interno dedicado exclusivamente às abas da barra inferior (`BottomBarNav`), garantindo que o usuário navegue entre Início, Busca, Criar, Urgente e Perfil sem perder o estado das telas ao alternar entre as abas.
-* **Gerenciamento de Estado (`MeuViewModel`):** Optamos por centralizar a lista reativa (`mutableStateListOf<Servico>` e `mutableStateListOf<Proposta>`) em um `ViewModel` dedicado para desacoplar a lógica de negócio e o estado da interface visual.
+* **Organização das Rotas:** Criamos uma estrutura de navegação centralizada para evitar erros com strings soltas.
+* **NavHost Aninhado:** Para resolver o layout da barra de navegação inferior (BottomBar), separamos o NavHost. As abas principais (Home, Buscar, Criar, Urgente, Perfil) rodam dentro da estrutura com a barra inferior, enquanto telas como "Detalhes do Serviço" rodam por cima, ocupando a tela cheia.
+* **Gerenciamento de Estado (ViewModel):** Centralizamos as listas (`Servico` e `Proposta`) em um ViewModel para separar a regra de negócios da interface visual (UI).
 
 ---
 
-## 4. Qual foi a complexidade extra que o trio colocou na tela de Detalhes, e por quê?
+## 4. Qual foi a complexidade extra que o trio colocou na tela de Detalhes, e por que escolheram justamente essa?
 
-Para atender ao requisito avançado da Seção 3.2 (fazer mais do que apenas reexibir campos), a **`TelaDescricaoServico`** executa as seguintes operações avançadas:
-1. **Consulta Relacional em Tempo Real:** A tela recebe o ID do serviço via argumento de rota, busca o item correspondente na lista do `ViewModel` e calcula em tempo real quantas propostas foram enviadas especificamente para aquele serviço (`qtdPropostas`).
-2. **Ação Interativa / Subfluxo:** Ao tocar em "Enviar Proposta", um diálogo interativo é aberto permitindo ao usuário informar o valor por hora e uma mensagem. Ao confirmar, uma nova `Proposta` é criada, vinculada ao `servicoId`, e adicionada à segunda lista reativa do app, navegando automaticamente para a tela de gerenciamento de propostas.
+Decidimos colocar a complexidade na **Tela de Descrição do Serviço** pois ela é o coração da interação entre o cliente e o prestador no aplicativo. 
+
+Ela não apenas exibe dados reescritos, mas:
+1. Recebe o ID do serviço clicado e busca os dados em tempo real.
+2. Faz o cruzamento de dados com a lista de propostas.
+3. Possui botões interativos e envia novas informações de volta para o ViewModel (como cadastrar um novo orçamento para aquele serviço específico).
+
+![Tela Descrição do Serviço](materiaisProgesso/TelaDescricao2.0.png)
 
 ---
 
 ## 5. Algum integrante teve dificuldade em algum ponto? Como resolveram?
 
-* **Dificuldade 1:** Passagem de parâmetros numéricos (`Int`) via rota no Compose Navigation e recuperação segura no destino (`arguments?.getInt("servicoId")`).
-  * **Resolução:** Estudamos a documentação do Navigation Compose e implementamos a tipagem correta (`type = NavType.IntType`) combinada com uma função helper `Rotas.descricao(id)` no objeto `Rotas`.
-* **Dificuldade 2:** Conflito entre a barra de navegação inferior (`BottomBar`) e as telas de detalhe em tela cheia.
-  * **Resolução:** Adotamos a arquitetura de **NavHost Aninhado**, onde o `Scaffold` com a barra inferior fica restrito apenas ao container das abas, permitindo que as telas de detalhes ocupem a tela inteira sem sobreposições indesejadas.
+A maior dificuldade que o trio enfrentou foi fazer o `Navigation` funcionar e integrar ele entre todas as telas de forma fluida. 
 
----
-
-## 📸 Evidências Visuais e Prints do App Funcionando
-
-> *Nota para a avaliação:* Conforme exigido na Seção 4, certifique-se de capturar prints do app em execução nos seguintes estados e salvá-los na pasta de documentação do repositório (ex: `docs/images/`):
-> 1. `print_home_lista.png` — Tela Inicial (`TelaHome`) exibindo a lista de serviços com `LazyColumn` e `Card`.
-> 2. `print_criar_servico.png` — Tela de formulário (`TelaCriarServico`) com campos preenchidos.
-> 3. `print_detalhes_servico.png` — Tela de Detalhes (`TelaDescricaoServico`) mostrando o cálculo de propostas.
-> 4. `print_propostas.png` — Tela de Lista de Propostas (`TelaPropostasServidores`).
-> 5. `print_bottom_bar.png` — Navegação pelas abas inferiores (`NavigationBar`).
-
-![alt text](image.png)
+**Como resolvemos:**
+Tivemos que estudar a fundo como o `NavHost` funciona no Jetpack Compose, aprendendo a passar argumentos entre rotas (como o ID de um serviço) e a estruturar a navegação para que a `BottomBar` não desaparecesse nas abas principais e não atrapalhasse as telas de detalhes.
