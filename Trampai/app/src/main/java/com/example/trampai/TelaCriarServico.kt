@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val roxo = Color(0xFF5A4FCF)
+private val textoEscuro = Color(0xFF0F172A)
+private val textoSuave = Color(0xFF64748B)
 
 @Composable
 fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit) {
@@ -38,11 +40,14 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
     ) {
         // CABEÇALHO
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Criar Serviço", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = roxo)
+            Column {
+                Text("Criar Serviço", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = roxo)
+                Text("Conte o que você precisa e receba propostas", fontSize = 13.sp, color = textoSuave)
+            }
             Box(
                 modifier = Modifier
                     .size(36.dp)
@@ -54,20 +59,31 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
             }
         }
 
-        // FORMULÁRIO
+        // FORMULÁRIO EM UM CARD
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            Campo("Título do Serviço", titulo, { titulo = it })
-            Campo("Categoria (ex: Limpeza)", categoria, { categoria = it })
-            Campo("Valor por hora (R$)", valor, { valor = it }, KeyboardType.Decimal)
-            Campo("Descrição", descricao, { descricao = it }, linhas = 3)
-            Campo("Requisitos Especiais", requisitos, { requisitos = it })
-            Campo("Localização (cidade)", localizacao, { localizacao = it })
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Campo("✏️", "Título do Serviço", titulo, { titulo = it })
+                    Campo("🏷️", "Categoria (ex: Limpeza)", categoria, { categoria = it })
+                    Campo("💰", "Valor por hora (R$)", valor, { valor = it }, KeyboardType.Decimal)
+                    Campo("📝", "Descrição", descricao, { descricao = it }, linhas = 3)
+                    Campo("📋", "Requisitos Especiais", requisitos, { requisitos = it })
+                    Campo("📍", "Localização (cidade)", localizacao, { localizacao = it })
+                }
+            }
         }
 
         // ERRO + BOTÃO
@@ -99,9 +115,9 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = roxo),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Text("Publicar Serviço", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
@@ -111,6 +127,7 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
 
 @Composable
 private fun Campo(
+    icone: String,
     nome: String,
     valor: String,
     aoMudar: (String) -> Unit,
@@ -121,18 +138,22 @@ private fun Campo(
         value = valor,
         onValueChange = aoMudar,
         label = { Text(nome) },
+        leadingIcon = { Text(icone) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = linhas == 1,
         minLines = linhas,
         keyboardOptions = KeyboardOptions(keyboardType = teclado),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
+            focusedContainerColor = Color(0xFFF8F9FD),
+            unfocusedContainerColor = Color(0xFFF8F9FD),
             focusedBorderColor = roxo,
-            unfocusedBorderColor = roxo.copy(alpha = 0.5f),
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black
+            unfocusedBorderColor = Color(0xFFD5D8E0),
+            focusedLabelColor = roxo,
+            unfocusedLabelColor = textoSuave,
+            cursorColor = roxo,
+            focusedTextColor = textoEscuro,
+            unfocusedTextColor = textoEscuro
         )
     )
 }
