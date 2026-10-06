@@ -1,63 +1,73 @@
-# 🛠️ Trampai (Taskly) - Trabalho 2
+# Trampai (Taskly)
 
-Aplicativo Android desenvolvido em **Jetpack Compose** para conectar prestadores de serviço e clientes, evoluindo do protótipo estático do Trabalho 1 para uma aplicação funcional, reativa e navegável.
+Aplicativo Android feito em **Jetpack Compose** que conecta quem precisa de um serviço com quem pode fazê-lo. O cliente publica um serviço, os profissionais enviam propostas e o cliente compara as ofertas.
 
----
+Este é o nosso **Trabalho 2** da disciplina. O app evoluiu do protótipo estático do Trabalho 1 para uma versão com listas reativas, formulários que funcionam e navegação completa entre as telas.
 
-## 🚀 Como Rodar o Projeto
-
-1. Certifique-se de ter o **Android Studio** instalado (Ladybug ou superior recomendado).
-2. Clone ou abra este repositório no Android Studio.
-3. Aguarde a sincronização do **Gradle** (`gradle_sync`).
-4. Conecte um dispositivo Android físico com Depuração USB ativada ou inicie um Emulador Android (API 24+ recomendada).
-5. Clique no botão **Run (▶)** para compilar e executar o aplicativo (`app:assembleDebug`).
+A história das nossas decisões, com prints e vídeos, está no **[PROCESSO.md](PROCESSO.md)**.
 
 ---
 
-## 📖 Documentação do Processo e Decisões (Seção 4)
+## Como rodar
 
-### 1. Como estava o projeto no Trabalho 1 e o que mudou?
-* **No Trabalho 1:** O aplicativo possuía telas estáticas (mockups) com navegação básica e dados fixos na tela, sem persistência em memória reativa, sem formulários funcionais de cadastro e sem passagem de parâmetros reais entre telas.
-* **No Trabalho 2:** O projeto foi totalmente refatorado para arquitetura moderna com **Jetpack Compose**. Adicionamos listas reativas (`mutableStateListOf`), formulários com validação de campos (`OutlinedTextField`), navegação dinâmica com passagem de argumentos por rota (`NavHost` e `NavController`), múltiplos tipos de `data classes` (`Servico` e `Proposta`) e uma barra de navegação inferior (`NavigationBar`) totalmente funcional.
+1. Instale o **Android Studio** (uma versão recente).
+2. Clone este repositório e abra a pasta do projeto no Android Studio (**File > Open**).
+3. Espere o Gradle terminar de sincronizar. Na primeira vez ele baixa as dependências, então precisa de internet.
+4. Escolha onde rodar:
+   - **Celular Android:** ative a *Depuração USB* e conecte o cabo; ou
+   - **Emulador:** crie um em *Device Manager* e inicie.
+5. Clique em **Run** (botão verde ▶).
 
-### 2. Por que essas telas novas? O que cada uma faz?
-O app possui **7 telas navegáveis principais**, organizadas para cobrir todo o fluxo do usuário:
-1. **Aba Início (`TelaHome`):** Lista principal de serviços disponíveis (`LazyColumn` + `Card`), com opção de exclusão e navegação para detalhes.
-2. **Aba Buscar (`TelaBuscaServicos`):** Tela de categorias e busca de serviços.
-3. **Aba Criar (`TelaCriarServico`):** Formulário completo com validação para o usuário publicar um novo serviço na lista reativa.
-4. **Aba Urgente (`TelaServicoRelampago`):** Tela de chamados rápidos/relâmpago.
-5. **Aba Perfil (`TelaPerfil`):** Perfil do usuário, estatísticas e atalho para propostas.
-6. **Tela de Descrição do Serviço (`TelaDescricaoServico`):** Tela de Detalhes 1. Exibe informações completas do serviço selecionado através de argumento de rota (`servicoId`).
-7. **Tela de Propostas de Servidores (`TelaPropostasServidores`):** Lista de propostas enviadas, permitindo gerenciar e remover propostas.
+> A versão mínima do Android aceita está no `minSdk` do arquivo `app/build.gradle.kts`.
 
-### 3. Decisões de configuração e organização do código
-* **Estrutura de Rotas Centralizada:** Criamos um objeto `Rotas` em `navigation/Rotas.kt` contendo todas as strings de rota como `const val`, além de funções auxiliares (como `Rotas.descricao(id)`) para montagem dinâmica de rotas com parâmetros.
-* **NavHost Aninhado (Abas vs. Telas Cheias):** 
-  * O `AppNavigation` (nível superior) gerencia as telas de navegação completa (Detalhes e Propostas).
-  * O `MinhaTela` gerencia um `NavHost` interno para as 5 abas da barra inferior (`NavigationBar`), mantendo o estado das abas intacto ao navegar entre elas.
-* **ViewModel Centralizado:** Toda a lógica de estado reativa (`mutableStateListOf` para serviços e propostas) e operações de CRUD em memória residem no `MeuViewModel`.
+### Dependências
 
-### 4. Complexidade extra na tela de detalhes
-A exigência da seção 3.2 era que pelo menos uma tela de detalhes fizesse mais do que apenas reexibir os campos. Na **`TelaDescricaoServico`**, implementamos:
-* **Combinação de dados entre as duas listas:** A tela busca o serviço pelo ID passado na rota e calcula dinamicamente quantas propostas foram enviadas para aquele serviço (`qtdPropostas`).
-* **Navegação secundária / Ação interativa:** Permite ao usuário abrir um diálogo de formulário (`DialogProposta`), preencher valores e enviar uma nova proposta que é salva instantaneamente na lista reativa de propostas.
+Já estão declaradas no Gradle, então basta sincronizar:
 
-### 5. Dificuldades e soluções do trio
-* **Desafio:** Gerenciar a navegação entre o `NavController` global de telas cheias e o `NavHost` interno das abas inferiores (`navInterno`).
-* **Solução:** Definimos uma regra clara de arquitetura: navegação entre abas usa `navInterno.irParaAba()`, enquanto navegação para fluxos externos (como detalhes e propostas) usa o `navController` principal.
+- Jetpack Compose + Material 3
+- Navigation Compose (`navigation-compose`)
+- ViewModel para Compose (`lifecycle-viewmodel-compose`)
+- Material Icons Extended (`material-icons-extended`)
 
 ---
 
-## 🎯 Checklist de Requisitos Atendidos
+## Roteiro rápido para testar
 
-- [x] Repositório estruturado com README e documentação do processo
-- [x] App com 7 telas navegáveis, todas funcionais
-- [x] `NavigationBar` (BottomNavigation) funcionando corretamente
-- [x] 2 `data classes` diferentes (`Servico` e `Proposta`)
-- [x] 2 telas de Lista usando `LazyColumn` + `Card` + `mutableStateListOf`
-- [x] Formulários para ADICIONAR novos itens via UI (`TextField` / `OutlinedTextField`)
-- [x] Funcionalidade para REMOVER itens pela UI
-- [x] 2 telas de Detalhes/Gestão com passagem de dados reais (argumento de rota)
-- [x] Complexidade extra na tela de detalhes (cálculo de propostas + envio interativo)
-- [x] Objeto `Rotas` com rotas nomeadas
-- [x] Botões de voltar funcionais (`popBackStack()`)
+1. Na aba **Criar**, preencha um serviço e toque em *Publicar Serviço*. Ele aparece no topo da **Início**.
+2. Toque no card do serviço para abrir a **Descrição**.
+3. Toque em *Enviar Proposta*, informe o valor por hora e uma mensagem. O app abre a lista de **Propostas**.
+4. No card da proposta, veja se o valor ficou acima ou abaixo do que o serviço pede, quem pediu e a hora do envio.
+5. **Segure** um card (na Início ou nas Propostas) para removê-lo.
+6. Passe pelas abas **Buscar**, **Urgente** e **Perfil** pela barra inferior.
+
+---
+
+## Organização do código
+
+```
+app/src/main/java/com/example/trampai/
+├── MainActivity.kt          ponto de entrada, chama o AppNavigation
+├── MeuViewModel.kt          data classes (Servico, Proposta) e as listas reativas
+├── navigation/              rotas, NavHost, barra inferior e abas
+└── Tela*.kt                 uma tela por arquivo
+```
+
+> Os dados ficam só na memória. Ao fechar o app, o que foi criado se perde. Isso é esperado nesta etapa do trabalho.
+
+---
+
+## Requisitos do trabalho
+
+| Requisito | Situação |
+|---|---|
+| Pelo menos 7 telas navegáveis | Sim (7 telas) |
+| `NavHost` central e objeto `Rotas` | Sim |
+| `NavigationBar` funcionando | Sim (5 abas) |
+| 2 data classes diferentes | Sim (`Servico` e `Proposta`) |
+| 2 telas de lista com `LazyColumn` + `Card` | Sim (Início e Propostas) |
+| Adicionar item pela interface, nas duas listas | Sim |
+| Remover item pela interface, nas duas listas | Sim (clique longo) |
+| Detalhe recebendo o item certo por argumento de rota | Sim, na Descrição do Serviço |
+| Detalhe com algo a mais do que reexibir campos | Sim (veja o PROCESSO.md) |
+| Segunda tela de detalhe, para a lista de propostas | Em andamento: hoje as propostas mostram os dados cruzados no próprio card |
+| `TopAppBar` com botão de voltar | Em andamento: hoje o voltar usa um botão próprio |
