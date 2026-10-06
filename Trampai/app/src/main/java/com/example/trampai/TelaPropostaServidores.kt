@@ -13,12 +13,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -98,6 +100,7 @@ fun TelaPropostasServidores(
 @Composable
 private fun CardProposta(proposta: Proposta, aoRemover: () -> Unit) {
     val context = LocalContext.current
+    val corDiferenca = corDiferenca(proposta.diferenca)
 
     Card(
         modifier = Modifier.fillMaxWidth().combinedClickable(
@@ -115,8 +118,9 @@ private fun CardProposta(proposta: Proposta, aoRemover: () -> Unit) {
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // Profissional, serviço da proposta e valor
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier.size(44.dp).clip(CircleShape).background(primaryColor),
@@ -135,9 +139,45 @@ private fun CardProposta(proposta: Proposta, aoRemover: () -> Unit) {
                 Text(proposta.valorFormatado, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = primaryColor)
             }
 
+            // Quanto o valor está abaixo/acima do que o serviço pede
+            Surface(shape = RoundedCornerShape(50), color = corDiferenca.copy(alpha = 0.12f)) {
+                Text(
+                    proposta.textoDiferenca,
+                    color = corDiferenca,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+
+            // Requerente do serviço e hora do envio
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Info(Icons.Default.Person, "Requerente: ${proposta.requerente}", Modifier.weight(1f))
+                Info(Icons.Default.Schedule, proposta.hora)
+            }
+
             if (proposta.mensagem.isNotBlank()) {
                 Text(proposta.mensagem, fontSize = 14.sp, color = Color(0xFF475569))
             }
         }
     }
+}
+
+@Composable
+private fun Info(icone: ImageVector, texto: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Icon(icone, contentDescription = null, tint = textSecondary, modifier = Modifier.size(14.dp))
+        Text(" $texto", fontSize = 12.sp, color = textSecondary)
+    }
+}
+
+// Verde = mais barata que o pedido, laranja = mais cara, cinza = igual
+private fun corDiferenca(diferenca: Double): Color = when {
+    diferenca < 0 -> Color(0xFF2E7D32)
+    diferenca > 0 -> Color(0xFFE65100)
+    else -> Color(0xFF64748B)
 }
