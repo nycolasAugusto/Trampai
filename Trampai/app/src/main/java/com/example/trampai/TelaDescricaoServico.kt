@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
@@ -270,12 +271,17 @@ fun TelaDescricaoServico(
         }
 
         // RESUMO (combina as duas listas) + BOTÃO INFERIOR
-        Text(
-            text = "📨 $qtdPropostas proposta(s) enviada(s) para este serviço",
-            fontSize = 13.sp,
-            color = textColorSecondary,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        Row(
+            modifier = Modifier.padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Email, contentDescription = null, tint = textColorSecondary, modifier = Modifier.size(16.dp))
+            Text(
+                text = " $qtdPropostas proposta(s) enviada(s) para este serviço",
+                fontSize = 13.sp,
+                color = textColorSecondary
+            )
+        }
 
         Button(
             onClick = { mostrarFormulario = true },

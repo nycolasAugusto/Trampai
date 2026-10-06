@@ -13,12 +13,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Work
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,12 +66,7 @@ fun TelaPerfil(
                     .clickable { voltarParaInicio() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "←",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF5A4FCF)
-                )
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color(0xFF5A4FCF))
             }
         }
 
@@ -69,7 +74,7 @@ fun TelaPerfil(
         CardPerfilPrincipal(
             nome = "Alex Souza",
             email = "alex.souza@email.com",
-            local = "📍 Copacabana, RJ"
+            local = "Copacabana, RJ"
         )
 
         // TÍTULO DA SEÇÃO
@@ -88,13 +93,13 @@ fun TelaPerfil(
         ) {
             CardInfo(
                 modifier = Modifier.weight(1f),
-                icone = "📋",
+                icone = Icons.Default.Work,
                 titulo = "Serviços",
                 valor = "12"
             )
             CardInfo(
                 modifier = Modifier.weight(1f),
-                icone = "⭐",
+                icone = Icons.Default.Star,
                 titulo = "Avaliação",
                 valor = "4.9"
             )
@@ -108,13 +113,13 @@ fun TelaPerfil(
         ) {
             CardInfo(
                 modifier = Modifier.weight(1f),
-                icone = "❤️",
+                icone = Icons.Default.Favorite,
                 titulo = "Favoritos",
                 valor = "8"
             )
             CardInfo(
                 modifier = Modifier.weight(1f),
-                icone = "💬",
+                icone = Icons.Default.Email,
                 titulo = "Mensagens",
                 valor = "3"
             )
@@ -146,12 +151,7 @@ fun TelaPerfil(
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
-            Text(
-                text = "›",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF5A4FCF)
-            )
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Color(0xFF5A4FCF))
         }
     }
 }
@@ -196,19 +196,20 @@ fun CardPerfilPrincipal(nome: String, email: String, local: String) {
                 color = Color.DarkGray,
                 modifier = Modifier.padding(top = 4.dp)
             )
-            Text(
-                text = local,
-                fontSize = 12.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            Row(
+                modifier = Modifier.padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                Text(text = " $local", fontSize = 12.sp, color = Color.Gray)
+            }
         }
     }
 }
 
 // COMPOSABLE: Card pequeno de informação
 @Composable
-fun CardInfo(modifier: Modifier = Modifier, icone: String, titulo: String, valor: String) {
+fun CardInfo(modifier: Modifier = Modifier, icone: ImageVector, titulo: String, valor: String) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -217,7 +218,7 @@ fun CardInfo(modifier: Modifier = Modifier, icone: String, titulo: String, valor
             .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = icone, fontSize = 22.sp)
+        Icon(icone, contentDescription = titulo, tint = Color(0xFF5A4FCF), modifier = Modifier.size(24.dp))
 
         Column {
             Text(

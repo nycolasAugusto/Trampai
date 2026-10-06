@@ -9,12 +9,22 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.ElectricalServices
+import androidx.compose.material.icons.filled.FormatPaint
+import androidx.compose.material.icons.filled.Plumbing
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Yard
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,14 +33,14 @@ private val roxo = Color(0xFF5A4FCF)
 private val textoEscuro = Color(0xFF0F172A)
 private val textoSuave = Color(0xFF64748B)
 
-// emoji to nome
+// ícone to nome
 private val categorias = listOf(
-    "🧹" to "Limpeza",
-    "🔧" to "Encanamento",
-    "💡" to "Elétrica",
-    "🎨" to "Pintura",
-    "🌱" to "Jardinagem",
-    "🛠️" to "Mecânica"
+    Icons.Default.CleaningServices to "Limpeza",
+    Icons.Default.Plumbing to "Encanamento",
+    Icons.Default.ElectricalServices to "Elétrica",
+    Icons.Default.FormatPaint to "Pintura",
+    Icons.Default.Yard to "Jardinagem",
+    Icons.Default.Build to "Mecânica"
 )
 
 @Composable
@@ -57,7 +67,7 @@ fun TelaBuscaServicos(
                     .clickable { voltarParaInicio() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("←", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = roxo)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = roxo)
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -76,7 +86,7 @@ fun TelaBuscaServicos(
             onValueChange = { busca = it },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("O que você está procurando?", color = Color(0xFF94A3B8)) },
-            leadingIcon = { Text("🔍") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = roxo) },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -105,15 +115,15 @@ fun TelaBuscaServicos(
                 }
             }
 
-            items(filtradas) { (emoji, nome) ->
-                CardCategoria(emoji, nome, aoSelecionarCategoria)
+            items(filtradas) { (icone, nome) ->
+                CardCategoria(icone, nome, aoSelecionarCategoria)
             }
         }
     }
 }
 
 @Composable
-private fun CardCategoria(emoji: String, nome: String, aoClicar: () -> Unit) {
+private fun CardCategoria(icone: ImageVector, nome: String, aoClicar: () -> Unit) {
     Card(
         modifier = Modifier
             .aspectRatio(1f)
@@ -134,7 +144,7 @@ private fun CardCategoria(emoji: String, nome: String, aoClicar: () -> Unit) {
                     .background(roxo.copy(alpha = 0.1f), RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(emoji, fontSize = 28.sp)
+                Icon(icone, contentDescription = nome, tint = roxo, modifier = Modifier.size(30.dp))
             }
 
             Spacer(modifier = Modifier.height(10.dp))

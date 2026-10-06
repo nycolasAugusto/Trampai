@@ -7,11 +7,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -55,7 +64,7 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
                     .clickable { voltarParaInicio() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("x", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Close, contentDescription = "Fechar", tint = Color.White)
             }
         }
 
@@ -76,12 +85,12 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Campo("✏️", "Título do Serviço", titulo, { titulo = it })
-                    Campo("🏷️", "Categoria (ex: Limpeza)", categoria, { categoria = it })
-                    Campo("💰", "Valor por hora (R$)", valor, { valor = it }, KeyboardType.Decimal)
-                    Campo("📝", "Descrição", descricao, { descricao = it }, linhas = 3)
-                    Campo("📋", "Requisitos Especiais", requisitos, { requisitos = it })
-                    Campo("📍", "Localização (cidade)", localizacao, { localizacao = it })
+                    Campo(Icons.Default.Edit, "Título do Serviço", titulo, { titulo = it })
+                    Campo(Icons.Default.Category, "Categoria (ex: Limpeza)", categoria, { categoria = it })
+                    Campo(Icons.Default.AttachMoney, "Valor por hora (R$)", valor, { valor = it }, KeyboardType.Decimal)
+                    Campo(Icons.Default.Description, "Descrição", descricao, { descricao = it }, linhas = 3)
+                    Campo(Icons.Default.Build, "Requisitos Especiais", requisitos, { requisitos = it })
+                    Campo(Icons.Default.LocationOn, "Localização (cidade)", localizacao, { localizacao = it })
                 }
             }
         }
@@ -127,7 +136,7 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
 
 @Composable
 private fun Campo(
-    icone: String,
+    icone: ImageVector,
     nome: String,
     valor: String,
     aoMudar: (String) -> Unit,
@@ -138,7 +147,7 @@ private fun Campo(
         value = valor,
         onValueChange = aoMudar,
         label = { Text(nome) },
-        leadingIcon = { Text(icone) },
+        leadingIcon = { Icon(icone, contentDescription = null, tint = roxo) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = linhas == 1,
         minLines = linhas,
