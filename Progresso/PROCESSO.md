@@ -252,3 +252,4 @@ O que decidimos construir no fim, alinhando as expectativas iniciais com a imple
 A demonstração do aplicativo em sua versão final.
 
 <video controls src="materiaisProgesso/AppEntregue.mp4" title="Aplicativo Entregue" width="400"></video>
+

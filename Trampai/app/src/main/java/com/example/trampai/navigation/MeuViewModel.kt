@@ -10,51 +10,9 @@ import kotlin.math.abs
 // Hora atual do aparelho, ex: "14:32"
 fun horaAtual(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
 
-data class Servico(
-    val id: Int,
-    val titulo: String,
-    val categoria: String,
-    val valorHora: Double,
-    val descricao: String,
-    val requisitos: String,
-    val localizacao: String,
-    val autor: String
-) {
-    val valorFormatado: String
-        get() = if (valorHora % 1.0 == 0.0) "R$ ${valorHora.toInt()}/hr"
-        else "R$ ${"%.2f".format(valorHora)}/hr"
-}
 
-data class Proposta(
-    val id: Int,
-    val servicoId: Int,
-    val servicoTitulo: String,
-    val profissional: String,
-    val valorHora: Double,
-    val mensagem: String,
-    val hora: String = "",           // preenchida ao enviar
-    val valorServico: Double = 0.0,  // valor/hora pedido no serviço (preenchido ao enviar)
-    val requerente: String = ""      // quem pediu o serviço (preenchido ao enviar)
-) {
-    val valorFormatado: String
-        get() = if (valorHora % 1.0 == 0.0) "R$ ${valorHora.toInt()}/hr"
-        else "R$ ${"%.2f".format(valorHora)}/hr"
 
-    // Negativo = proposta mais barata que o pedido
-    val diferenca: Double
-        get() = valorHora - valorServico
 
-    val textoDiferenca: String
-        get() {
-            val d = abs(diferenca)
-            val v = if (d % 1.0 == 0.0) "R$ ${d.toInt()}/hr" else "R$ ${"%.2f".format(d)}/hr"
-            return when {
-                diferenca < 0 -> "$v abaixo do pedido"
-                diferenca > 0 -> "$v acima do pedido"
-                else -> "Igual ao valor pedido"
-            }
-        }
-}
 
 class MeuViewModel : ViewModel() {
 
