@@ -13,6 +13,7 @@ Neste documento contamos como saímos do protótipo do Trabalho 1 até a versão
 | [Versão 1 do app](materiaisProgesso/VERSAO1PROJETO.mp4) | Como o projeto estava no Trabalho 1 |
 | [Planos da versão 2](materiaisProgesso/V2_PLANOS.mp4) | O que planejamos mudar e as escolhas que fizemos |
 | [Planos finais da versão 2](materiaisProgesso/V2_PLANOS_FINAIS.mp4) | O que decidimos construir no fim |
+| [Comprovacao PERSISTENCIA banco de dados](materiaisProgesso/BancoDeDadosFuncionando.mp4) | O que decidimos construir no fim |
 
 > Se o vídeo não abrir direto no navegador, é só baixar o arquivo.
 
@@ -252,4 +253,316 @@ O que decidimos construir no fim, alinhando as expectativas iniciais com a imple
 A demonstração do aplicativo em sua versão final.
 
 <video controls src="materiaisProgesso/AppEntregue.mp4" title="Aplicativo Entregue" width="400"></video>
+
+---
+
+# Trabalho 3: persistência com Room
+
+Até aqui, tudo o que o usuário criava morava na memória do aparelho. Bastava fechar o app para a lista voltar vazia. Neste trabalho trocamos a memória por um **banco de dados Room**: o que o usuário cria agora fica gravado no celular e continua lá quando o app abre de novo.
+
+As seções acima descrevem o app do Trabalho 2. Daqui para baixo contamos o que mudou para chegar à versão com banco de dados.
+
+> **Como usar os espaços de foto:** onde estiver escrito **[ESPAÇO PARA FOTO]**, salve a imagem na pasta `materiaisProgesso` com o nome sugerido, apague a linha em negrito e tire as marcas `<!--` e `-->` da linha de baixo.
+
+---
+
+## 1. O que mudou do Trabalho 2 para o Trabalho 3
+
+| | Trabalho 2 | Trabalho 3 |
+|---|---|---|
+| **Onde os dados ficam** | Em listas na memória (`mutableStateListOf`) | Em um banco Room, num arquivo dentro do aparelho |
+| **Fechar o app** | Perdia tudo | Os dados continuam lá |
+| **Data classes** | Classes comuns | `@Entity`, que viram tabelas (`servicos` e `propostas`) |
+| **Buscar** | A lista já estava pronta na memória | `LaunchedEffect(Unit)` chama uma função que usa `dao.buscarTodos()` |
+| **Inserir e remover** | Mexiam só na lista | Gravam e apagam no banco, por um DAO, fora da thread principal |
+| **Editar** | Não existia | `dao.atualizar(...)`, com um formulário de edição |
+| **Detalhe do serviço** | Procurava o serviço na lista da memória | Recebe só o id pela rota e busca no banco (`buscarPorId`) |
+| **Erros** | Sem tratamento | `try/catch` com `Log.e` em toda operação de banco |
+
+As listas continuam reativas: a tela ainda lê um `mutableStateListOf`, mas agora quem preenche essa lista é o banco.
+
+---
+
+## 2. A estrutura do Room
+
+### Dependências e a ordem certa
+
+O Room precisa do **KSP**, um plugin que gera o código do banco na hora de compilar. A ordem importa: primeiro adicionamos o plugin e sincronizamos o Gradle; só depois, em outro passo, colocamos a linha `ksp(...)`. Se a linha do `ksp` entrar antes do plugin ser sincronizado, o Gradle não reconhece o comando.
+
+```kotlin
+plugins {
+    // ...
+    id("com.google.devtools.ksp") version "..."   // 1º passo: plugin, depois Sync
+}
+
+dependencies {
+    // 2º passo: depois do Sync do plugin
+    val room_version = "3.0.3"
+    implementation("androidx.room3:room3-runtime:$room_version")
+    ksp("androidx.room3:room3-compiler:$room_version")
+}
+```
+
+Seguimos o exemplo da aula, cujo código importa `androidx.room3`. Por isso os artefatos têm o prefixo `room3`, e o `room-ktx` não é usado.
+
+> **[ESPAÇO PARA FOTO]** Trecho do `build.gradle.kts` com o plugin do KSP e as dependências do Room.
+>
+> <!-- <img src="materiaisProgesso/T3_Gradle.png" alt="Gradle com Room e KSP" width="520"> -->
+
+### As duas entidades
+
+Cada data class do Trabalho 2 virou uma tabela. O `id` é gerado sozinho pelo banco.
+
+```kotlin
+@Entity(tableName = "servicos")
+data class Servico(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val titulo: String,
+    val categoria: String,
+    val valorHora: Double,
+    val descricao: String,
+    val requisitos: String,
+    val localizacao: String,
+    val autor: String
+)
+```
+
+`Proposta` segue o mesmo molde (tabela `propostas`) e guarda o `servicoId` do serviço a que pertence.
+
+**Uma decisão importante:** os valores calculados (`valorFormatado`, `diferenca`, `textoDiferenca`) saíram de dentro das classes e viraram propriedades logo abaixo delas, no mesmo arquivo. Dentro da classe, o Room poderia confundi-los com colunas da tabela. Do lado de fora, as telas continuam usando `servico.valorFormatado` do mesmo jeito de antes.
+
+### Os dois DAOs
+
+Cada entidade tem o seu DAO, com os quatro métodos básicos. Todos são `suspend`.
+
+```kotlin
+@Dao
+interface ServicoDAO {
+
+    @Insert
+    suspend fun inserir(servico: Servico)
+
+    @Query("SELECT * FROM servicos ORDER BY id DESC")
+    suspend fun buscarTodos(): List<Servico>
+
+    @Update
+    suspend fun atualizar(servico: Servico)
+
+    @Delete
+    suspend fun deletar(servico: Servico)
+
+    // consulta filtrada: usada pela tela de Descrição
+    @Query("SELECT * FROM servicos WHERE id = :id")
+    suspend fun buscarPorId(id: Int): Servico?
+}
+```
+
+O DAO de propostas tem os mesmos quatro métodos, mais `deletarPorServico`, que apaga todas as propostas de um serviço quando ele é removido.
+
+### O banco
+
+O `AppDatabase` reúne as entidades e expõe os DAOs. Usamos o padrão Singleton visto em aula (`@Volatile` mais `synchronized`) para existir uma única instância do banco no app inteiro.
+
+```kotlin
+@Database(entities = [Servico::class, Proposta::class], version = 1)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun servicoDAO(): ServicoDAO
+    abstract fun propostaDAO(): PropostaDAO
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase { /* ... */ }
+    }
+}
+```
+
+> **[ESPAÇO PARA FOTO]** Painel de arquivos do Android Studio mostrando `Servico`, `Proposta`, os dois DAOs e o `AppDatabase`.
+>
+> <!-- <img src="materiaisProgesso/T3_ArquivosRoom.png" alt="Arquivos do Room no projeto" width="320"> -->
+
+---
+
+## 3. O CRUD completo, agora no banco
+
+| Operação | Como funciona | Onde o usuário faz |
+|---|---|---|
+| **Buscar** | `LaunchedEffect(Unit)` chama uma função `suspend` que usa `buscarTodos()` quando a tela abre | Abas *Início* e *Propostas* |
+| **Inserir** | `dao.inserir(...)` dentro de `CoroutineScope(Dispatchers.IO).launch` | Aba *Criar* (serviço) e o diálogo de proposta |
+| **Atualizar** | `dao.atualizar(...)` dentro de `CoroutineScope(Dispatchers.IO).launch` | Ícone de lápis na *Descrição do Serviço* |
+| **Remover** | `dao.deletar(...)` dentro de `CoroutineScope(Dispatchers.IO).launch` | Clique longo no card, na *Início* e nas *Propostas* |
+
+### Buscar
+
+Quando a tela abre, ela pede os dados ao banco e preenche a lista:
+
+```kotlin
+// na aba Início
+LaunchedEffect(Unit) {
+    viewModel.carregarServicos(db)
+}
+
+// no MeuViewModel
+suspend fun carregarServicos(db: AppDatabase) {
+    try {
+        val lista = db.servicoDAO().buscarTodos()
+        servicos.clear()
+        servicos.addAll(lista)
+    } catch (e: Exception) {
+        Log.e("Trampai", "Erro ao buscar serviços", e)
+    }
+}
+```
+
+### Inserir, atualizar e remover
+
+As três seguem o mesmo molde: a operação roda numa coroutine em `Dispatchers.IO`, para a tela não travar; fica dentro de um `try/catch`; e, no fim, a lista é recarregada para a tela mostrar o resultado.
+
+```kotlin
+fun adicionarServico(db: AppDatabase, servico: Servico) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            db.servicoDAO().inserir(servico)
+            carregarServicos(db)
+        } catch (e: Exception) {
+            Log.e("Trampai", "Erro ao inserir serviço", e)
+        }
+    }
+}
+```
+
+### Inserir na prática
+
+> **[ESPAÇO PARA FOTO]** Aba *Criar* com o formulário preenchido.
+>
+> <!-- <img src="materiaisProgesso/T3_CriarServico.png" alt="Criar serviço preenchido" width="280"> -->
+
+> **[ESPAÇO PARA FOTO]** Aba *Início* mostrando o serviço novo no topo da lista.
+>
+> <!-- <img src="materiaisProgesso/T3_InicioComItem.png" alt="Início com o serviço criado" width="280"> -->
+
+### Editar na prática
+
+O botão de lápis, no canto da *Descrição do Serviço*, abre o formulário **Editar serviço**, já preenchido com os dados atuais. Ao salvar, o app chama `atualizar` no banco e a tela mostra o valor novo. Foi a última peça do CRUD a ser implementada.
+
+> **[ESPAÇO PARA FOTO]** Formulário *Editar serviço* aberto, com os dados atuais.
+>
+> <!-- <img src="materiaisProgesso/T3_EditarServico.png" alt="Editar serviço" width="280"> -->
+
+> **[ESPAÇO PARA FOTO]** A *Descrição* (ou a *Início*) já com o dado alterado.
+>
+> <!-- <img src="materiaisProgesso/T3_ServicoEditado.png" alt="Serviço depois de editado" width="280"> -->
+
+### Remover na prática
+
+Segurar o card remove o serviço do banco. As propostas dele também saem (`deletarPorServico`), para não sobrar proposta ligada a um serviço que não existe mais.
+
+> **[ESPAÇO PARA FOTO]** Aviso "Serviço removido" na tela, logo depois do clique longo.
+>
+> <!-- <img src="materiaisProgesso/T3_RemoverServico.png" alt="Serviço removido" width="280"> -->
+
+---
+
+## 4. A tela de detalhes lendo direto do banco
+
+No Trabalho 2, a rota da *Descrição* já levava só o **id** (`descricao/{servicoId}`), mas a tela procurava o serviço numa lista da memória. Agora ela pergunta ao banco usando a consulta filtrada `buscarPorId`:
+
+```kotlin
+var servico by remember { mutableStateOf<Servico?>(null) }
+
+LaunchedEffect(id) {
+    servico = viewModel.buscarServicoPorId(db, id)   // dao.buscarPorId(id)
+    viewModel.carregarPropostas(db)                  // para contar as propostas
+}
+```
+
+Dois motivos nos fizeram gostar desse jeito:
+
+- **A tela mostra o que está de fato no banco**, e não uma cópia que pode estar desatualizada.
+- **Depois de editar um serviço**, a *Descrição* já mostra o valor novo e a *Início* também, porque ambas vêm da mesma fonte.
+
+A informação que vai além de exibir dados continua lá: a *Descrição* conta, entre as propostas do banco, quantas pertencem àquele serviço, e o card da proposta compara o valor dela com o que o serviço pede.
+
+> **[ESPAÇO PARA FOTO]** A tela de *Descrição* de um serviço, mostrando os dados dele e a contagem de propostas.
+>
+> <!-- <img src="materiaisProgesso/T3_DetalheDoBanco.png" alt="Descrição lendo do banco" width="280"> -->
+
+---
+
+## 5. O teste de aceitação: os dados sobrevivem?
+
+Este é o teste que prova que o banco funciona. Passos que seguimos:
+
+1. Criar um serviço e enviar uma proposta para ele.
+2. Fechar o app **por completo**, tirando-o da lista de apps recentes.
+3. Abrir o app de novo.
+4. Conferir se o serviço e a proposta continuam lá.
+
+> **[ESPAÇO PARA FOTO]** Antes de fechar: *Início* com o serviço criado.
+>
+> <!-- <img src="materiaisProgesso/T3_Aceitacao_1_Antes.png" alt="Antes de fechar o app" width="280"> -->
+
+> **[ESPAÇO PARA FOTO]** O app fechado, na tela de apps recentes (ou saindo da lista).
+>
+> <!-- <img src="materiaisProgesso/T3_Aceitacao_2_Fechado.png" alt="App fechado" width="280"> -->
+
+> **[ESPAÇO PARA FOTO]** Depois de reabrir: o mesmo serviço (e a proposta) ainda aparecendo.
+>
+> <!-- <img src="materiaisProgesso/T3_Aceitacao_3_Reaberto.png" alt="Dados após reabrir o app" width="280"> -->
+
+> **[ESPAÇO PARA VÍDEO]** Gravação curta do teste completo.
+>
+> <!-- [Assistir ao teste de persistência](materiaisProgesso/T3_Room.mp4) -->
+
+---
+
+## 6. Decisões de organização do código no Trabalho 3
+
+- **Mantivemos o ViewModel.** `MeuViewModel` continua guardando as listas que as telas leem, mas agora toda alteração passa pelos DAOs. As telas quase não mudaram.
+- **O banco chega por parâmetro.** Quem precisa dele pega a instância com `AppDatabase.getDatabase(context)` e a passa ao ViewModel. Assim usamos só o que foi visto em aula.
+- **A lista é recarregada depois de cada alteração.** Depois de inserir, atualizar ou remover, o ViewModel busca tudo de novo no banco. Fica simples e a tela sempre mostra o que está salvo.
+- **Buscar usa `LaunchedEffect`; escrever usa `Dispatchers.IO`.** Seguimos a descrição do enunciado: a busca roda quando a tela abre, e as gravações rodam em `CoroutineScope(Dispatchers.IO).launch`.
+- **O banco começa vazio.** Tiramos os dois serviços de exemplo que antes nasciam com o app. Se eles fossem recriados a cada abertura, voltariam depois de apagados e atrapalhariam o teste de persistência.
+- **O "Aceitar" da tela Urgente leva à Início.** Antes ele abria o serviço de id 1, que pode não existir mais no banco.
+
+---
+
+## 7. O retorno do professor: quem cria o serviço também envia a proposta
+
+Na apresentação anterior, o professor observou que, no nosso app, **quem cria o serviço é a mesma pessoa que envia a proposta**, o que não faz sentido num app que liga clientes a profissionais.
+
+**Por que acontece.** O app ainda não tem contas nem login. Existe um único usuário fixo ("Alex Souza"), que ocupa os dois papéis: cliente, quando publica um serviço, e profissional, quando responde com uma proposta.
+
+**O que decidimos.** Contas e perfis de usuário ficaram **fora do escopo** deste trabalho. O enunciado pede persistência com Room e um CRUD completo, e login seria um trabalho à parte, com telas e regras próprias. Preferimos entregar o banco de dados bem feito a abrir uma frente nova pela metade.
+
+**Como resolveríamos depois:**
+
+- Criar contas com login, cada uma com um papel (cliente ou profissional).
+- Mostrar a opção *Enviar Proposta* só para quem é profissional.
+- Impedir que alguém envie proposta para o próprio serviço.
+- Ligar o *Perfil* a dados reais do usuário que fez login.
+
+---
+
+## 8. Dificuldades do Trabalho 3
+
+- **Room 2 ou Room 3?** Começamos com os nomes de pacote e de artefato do Room 2 (`androidx.room`). O código da aula usa `androidx.room3`, então tivemos que trocar as dependências e todos os imports.
+- **Classes repetidas.** Quando transformamos `Servico` e `Proposta` em `@Entity`, as versões antigas ainda estavam dentro do `MeuViewModel`. O Android Studio acusou *Redeclaration* e avisou que as propriedades novas estavam "sobrepostas". Resolvemos apagando as classes antigas.
+- **A ordem do Gradle.** Foi preciso sincronizar o plugin do KSP antes de adicionar a linha `ksp(...)`; fora dessa ordem, o Gradle não reconhece o comando.
+- **Valores calculados dentro da entidade.** Perceber que o `valorFormatado` e a `textoDiferenca` poderiam ser confundidos com colunas nos levou a movê-los para fora da classe.
+
+---
+
+## 9. O que ainda não fizemos
+
+- **Contas de usuário** (veja a seção 7).
+- **Edição de propostas.** Hoje só o serviço pode ser editado. Proposta só pode ser enviada e removida.
+- **Propostas antigas após editar um serviço.** Elas guardam o valor que o serviço pedia na hora em que foram enviadas, então a comparação "abaixo/acima do pedido" não se atualiza se o valor do serviço mudar depois.
+- **Tela própria para cada proposta**, com aceitar e recusar.
+- **`TopAppBar` com botão de voltar.** Nossas telas de detalhe usam um botão de voltar próprio.
+- **Perfil e Urgente com dados reais.** Continuam com dados de exemplo.
+
+---
 
