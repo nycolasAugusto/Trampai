@@ -26,7 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val roxo = Color(0xFF5A4FCF)
+private val roxo = Color(0xFC5A4FCF)
 private val textoEscuro = Color(0xFF0F172A)
 private val textoSuave = Color(0xFF64748B)
 

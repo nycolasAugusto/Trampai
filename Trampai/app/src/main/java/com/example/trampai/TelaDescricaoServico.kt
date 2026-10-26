@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
@@ -31,7 +32,8 @@ fun TelaDescricaoServico(
     servico: Servico,
     qtdPropostas: Int,
     voltarParaInicio: () -> Unit,
-    aoEnviarProposta: (Proposta) -> Unit
+    aoEnviarProposta: (Proposta) -> Unit,
+    aoSalvarEdicao: (Servico) -> Unit
 ) {
     val backgroundColor = Color(0xFFF8F9FD)
     val primaryColor = Color(0xFF6366F1)
@@ -39,6 +41,7 @@ fun TelaDescricaoServico(
     val textColorSecondary = Color(0xFF64748B)
 
     var mostrarFormulario by remember { mutableStateOf(false) }
+    var mostrarEdicao by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -80,6 +83,26 @@ fun TelaDescricaoServico(
                 fontWeight = FontWeight.Bold,
                 color = textColorPrimary
             )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // EDITAR: abre o formulário de edição do serviço
+            Surface(
+                onClick = { mostrarEdicao = true },
+                shape = CircleShape,
+                color = Color.White,
+                shadowElevation = 2.dp,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar serviço",
+                        tint = Color(0xFF1E293B),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -301,6 +324,17 @@ fun TelaDescricaoServico(
         }
     }
 
+    if (mostrarEdicao) {
+        DialogEditarServico(
+            servico = servico,
+            aoCancelar = { mostrarEdicao = false },
+            aoSalvar = {
+                mostrarEdicao = false
+                aoSalvarEdicao(it)
+            }
+        )
+    }
+
     if (mostrarFormulario) {
         DialogProposta(
             servico = servico,
@@ -373,5 +407,91 @@ private fun DialogProposta(
         dismissButton = {
             TextButton(onClick = aoCancelar) { Text("Cancelar") }
         }
+    )
+}
+
+
+// Formulário de edição do serviço (já vem preenchido com os dados atuais)
+@Composable
+private fun DialogEditarServico(
+    servico: Servico,
+    aoCancelar: () -> Unit,
+    aoSalvar: (Servico) -> Unit
+) {
+    var titulo by remember { mutableStateOf(servico.titulo) }
+    var categoria by remember { mutableStateOf(servico.categoria) }
+    var valor by remember {
+        mutableStateOf(
+            if (servico.valorHora % 1.0 == 0.0) servico.valorHora.toInt().toString()
+            else servico.valorHora.toString()
+        )
+    }
+    var descricao by remember { mutableStateOf(servico.descricao) }
+    var requisitos by remember { mutableStateOf(servico.requisitos) }
+    var localizacao by remember { mutableStateOf(servico.localizacao) }
+    var erro by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = aoCancelar,
+        title = { Text("Editar serviço") },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CampoEdicao("Título", titulo) { titulo = it }
+                CampoEdicao("Categoria", categoria) { categoria = it }
+                CampoEdicao("Valor por hora (R$)", valor, KeyboardType.Decimal) { valor = it }
+                CampoEdicao("Descrição", descricao, linhas = 3) { descricao = it }
+                CampoEdicao("Requisitos", requisitos) { requisitos = it }
+                CampoEdicao("Localização", localizacao) { localizacao = it }
+
+                if (erro.isNotEmpty()) {
+                    Text(erro, color = Color(0xFFD32F2F), fontSize = 13.sp)
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val v = valor.replace(",", ".").toDoubleOrNull()
+                if (titulo.isBlank() || categoria.isBlank()) {
+                    erro = "Preencha o título e a categoria."
+                } else if (v == null || v <= 0) {
+                    erro = "Informe um valor válido, ex: 50 ou 50,50."
+                } else {
+                    aoSalvar(
+                        servico.copy(
+                            titulo = titulo.trim(),
+                            categoria = categoria.trim(),
+                            valorHora = v,
+                            descricao = descricao.trim(),
+                            requisitos = requisitos.trim(),
+                            localizacao = localizacao.trim().ifBlank { "Local não informado" }
+                        )
+                    )
+                }
+            }) { Text("Salvar") }
+        },
+        dismissButton = {
+            TextButton(onClick = aoCancelar) { Text("Cancelar") }
+        }
+    )
+}
+
+@Composable
+private fun CampoEdicao(
+    nome: String,
+    valor: String,
+    teclado: KeyboardType = KeyboardType.Text,
+    linhas: Int = 1,
+    aoMudar: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = valor,
+        onValueChange = aoMudar,
+        label = { Text(nome) },
+        singleLine = linhas == 1,
+        minLines = linhas,
+        keyboardOptions = KeyboardOptions(keyboardType = teclado)
     )
 }
