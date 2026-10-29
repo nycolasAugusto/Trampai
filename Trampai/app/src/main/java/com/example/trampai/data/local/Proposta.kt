@@ -1,4 +1,4 @@
-package com.example.trampai
+package com.example.trampai.data.local
 
 import androidx.room3.Entity
 import androidx.room3.PrimaryKey

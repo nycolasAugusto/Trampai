@@ -1,4 +1,4 @@
-package com.example.trampai
+package com.example.trampai.data.local
 
 import android.content.Context
 import androidx.room3.Database
