@@ -8,12 +8,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.trampai.MeuViewModel
+import com.example.trampai.ui.servicos.ServicosViewModel
+
 
 // Container das abas: tem a barra inferior e um NavHost próprio (navInterno).
 // As telas daqui já trazem o próprio cabeçalho, por isso não há TopAppBar neste Scaffold.
 @Composable
-fun MinhaTela(navController: NavHostController, viewModel: MeuViewModel) {
+fun MinhaTela(navController: NavHostController,  servicosViewModel: ServicosViewModel) {
 
     val navInterno = rememberNavController()
 
@@ -27,9 +28,9 @@ fun MinhaTela(navController: NavHostController, viewModel: MeuViewModel) {
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            composable(Rotas.ABA_INICIO) { AbaInicio(navController, navInterno, viewModel) }
+            composable(Rotas.ABA_INICIO) { AbaInicio(navController, navInterno, servicosViewModel) }
             composable(Rotas.ABA_BUSCA) { AbaBusca(navController, navInterno) }
-            composable(Rotas.ABA_CRIAR) { AbaCriar(navInterno, viewModel) }
+            composable(Rotas.ABA_CRIAR) { AbaCriar(navInterno, servicosViewModel) }
             composable(Rotas.ABA_URGENTE) { AbaUrgente(navController, navInterno) }
             composable(Rotas.ABA_PERFIL) { AbaPerfil(navController, navInterno) }
 

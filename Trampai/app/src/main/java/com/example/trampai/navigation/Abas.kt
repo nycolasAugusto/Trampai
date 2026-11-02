@@ -1,33 +1,22 @@
 package com.example.trampai.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
-import com.example.trampai.AppDatabase
-import com.example.trampai.MeuViewModel
-import com.example.trampai.TelaBuscaServicos
-import com.example.trampai.TelaCriarServico
-import com.example.trampai.TelaHome
-import com.example.trampai.TelaPerfil
-import com.example.trampai.TelaServicoRelampago
-
+import com.example.trampai.ui.TelaBuscaServicos
+import com.example.trampai.ui.TelaCriarServico
+import com.example.trampai.ui.TelaPerfil
+import com.example.trampai.ui.TelaServicoRelampago
+import com.example.trampai.ui.TelaHome
+import com.example.trampai.ui.servicos.ServicosViewModel
 
 @Composable
 fun AbaInicio(
     navController: NavHostController,
     navInterno: NavHostController,
-    viewModel: MeuViewModel
+    servicosViewModel: ServicosViewModel
 ) {
-    val db = AppDatabase.getDatabase(LocalContext.current)
-
-    LaunchedEffect(Unit) {
-        viewModel.carregarServicos(db)
-    }
-
     TelaHome(
-        servicos = viewModel.servicos,
-        aoRemover = { viewModel.removerServico(db, it) },
+        viewModel = servicosViewModel,
         irParaBusca = { navInterno.irParaAba(Rotas.ABA_BUSCA) },
         irParaPerfil = { navInterno.irParaAba(Rotas.ABA_PERFIL) },
         irParaUrgente = { navInterno.irParaAba(Rotas.ABA_URGENTE) },
@@ -44,15 +33,11 @@ fun AbaBusca(navController: NavHostController, navInterno: NavHostController) {
 }
 
 @Composable
-fun AbaCriar(navInterno: NavHostController, viewModel: MeuViewModel) {
-    val db = AppDatabase.getDatabase(LocalContext.current)
-
+fun AbaCriar(navInterno: NavHostController, servicosViewModel: ServicosViewModel) {
     TelaCriarServico(
+        viewModel = servicosViewModel,
         voltarParaInicio = { navInterno.irParaAba(Rotas.ABA_INICIO) },
-        aoPublicar = { servico ->
-            viewModel.adicionarServico(db, servico)
-            navInterno.irParaAba(Rotas.ABA_INICIO)
-        }
+        aoPublicar = { navInterno.irParaAba(Rotas.ABA_INICIO) }
     )
 }
 

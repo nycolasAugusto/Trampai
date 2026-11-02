@@ -1,4 +1,4 @@
-package com.example.trampai
+package com.example.trampai.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,6 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.trampai.data.local.Proposta
+import androidx.compose.foundation.lazy.items
+import com.example.trampai.data.local.diferenca
+import com.example.trampai.data.local.textoDiferenca
+import com.example.trampai.data.local.valorFormatado
 
 private val primaryColor = Color(0xFF6366F1)
 private val textPrimary = Color(0xFF0F172A)

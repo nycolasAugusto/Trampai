@@ -1,4 +1,4 @@
-package com.example.trampai
+package com.example.trampai.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

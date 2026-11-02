@@ -1,4 +1,4 @@
-package com.example.trampai
+package com.example.trampai.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,20 +25,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.trampai.ui.servicos.ServicosViewModel
 
-private val roxo = Color(0xFC5A4FCF)
+private val roxo = Color(0xFF5A4FCF)
 private val textoEscuro = Color(0xFF0F172A)
 private val textoSuave = Color(0xFF64748B)
 
 @Composable
-fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit) {
-    var titulo by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
-    var valor by remember { mutableStateOf("") }
-    var descricao by remember { mutableStateOf("") }
-    var requisitos by remember { mutableStateOf("") }
-    var localizacao by remember { mutableStateOf("") }
-    var erro by remember { mutableStateOf("") }
+fun TelaCriarServico(
+    viewModel: ServicosViewModel,
+    voltarParaInicio: () -> Unit,
+    aoPublicar: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Se sobrou uma edição aberta em outra tela, começa com o formulário limpo
+    LaunchedEffect(Unit) {
+        if (uiState.servicoEmEdicao != null) viewModel.onCancelar()
+    }
 
     Column(
         modifier = Modifier
@@ -61,7 +66,10 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
                 modifier = Modifier
                     .size(36.dp)
                     .background(roxo, RoundedCornerShape(12.dp))
-                    .clickable { voltarParaInicio() },
+                    .clickable {
+                        viewModel.onCancelar()
+                        voltarParaInicio()
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.Close, contentDescription = "Fechar", tint = Color.White)
@@ -85,44 +93,25 @@ fun TelaCriarServico(voltarParaInicio: () -> Unit, aoPublicar: (Servico) -> Unit
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Campo(Icons.Default.Edit, "Título do Serviço", titulo, { titulo = it })
-                    Campo(Icons.Default.Category, "Categoria (ex: Limpeza)", categoria, { categoria = it })
-                    Campo(Icons.Default.AttachMoney, "Valor por hora (R$)", valor, { valor = it }, KeyboardType.Decimal)
-                    Campo(Icons.Default.Description, "Descrição", descricao, { descricao = it }, linhas = 3)
-                    Campo(Icons.Default.Build, "Requisitos Especiais", requisitos, { requisitos = it })
-                    Campo(Icons.Default.LocationOn, "Localização (cidade)", localizacao, { localizacao = it })
+                    Campo(Icons.Default.Edit, "Título do Serviço", uiState.titulo, viewModel::onTituloChange)
+                    Campo(Icons.Default.Category, "Categoria (ex: Limpeza)", uiState.categoria, viewModel::onCategoriaChange)
+                    Campo(Icons.Default.AttachMoney, "Valor por hora (R$)", uiState.valor, viewModel::onValorChange, KeyboardType.Decimal)
+                    Campo(Icons.Default.Description, "Descrição", uiState.descricao, viewModel::onDescricaoChange, linhas = 3)
+                    Campo(Icons.Default.Build, "Requisitos Especiais", uiState.requisitos, viewModel::onRequisitosChange)
+                    Campo(Icons.Default.LocationOn, "Localização (cidade)", uiState.localizacao, viewModel::onLocalizacaoChange)
                 }
             }
         }
 
         // ERRO + BOTÃO
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            if (erro.isNotEmpty()) {
-                Text(erro, color = Color(0xFFD32F2F), fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+            if (uiState.erro.isNotEmpty()) {
+                Text(uiState.erro, color = Color(0xFFD32F2F), fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
             }
             Button(
                 onClick = {
-                    val valorNumero = valor.replace(",", ".").toDoubleOrNull()
-                    erro = when {
-                        titulo.isBlank() -> "Informe o título do serviço."
-                        categoria.isBlank() -> "Informe a categoria."
-                        valorNumero == null || valorNumero <= 0 -> "Informe um valor válido, ex: 50 ou 50,50."
-                        else -> ""
-                    }
-                    if (erro.isEmpty() && valorNumero != null) {
-                        aoPublicar(
-                            Servico(
-                                id = 0, // o ViewModel define o id
-                                titulo = titulo.trim(),
-                                categoria = categoria.trim(),
-                                valorHora = valorNumero,
-                                descricao = descricao.trim(),
-                                requisitos = requisitos.trim(),
-                                localizacao = localizacao.trim().ifBlank { "Local não informado" },
-                                autor = "Alex Souza"
-                            )
-                        )
-                    }
+                    // onSave devolve true quando o formulário é válido
+                    if (viewModel.onSave()) aoPublicar()
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = roxo),

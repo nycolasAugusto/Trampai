@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -19,17 +17,32 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.trampai.AppDatabase
-import com.example.trampai.MeuViewModel
-import com.example.trampai.Servico
-import com.example.trampai.TelaDescricaoServico
-import com.example.trampai.TelaPropostasServidores
+import com.example.trampai.data.local.AppDatabase
+import com.example.trampai.data.repository.PropostaRepository
+import com.example.trampai.data.repository.ServicoRepository
+import com.example.trampai.ui.TelaDescricaoServico
+import com.example.trampai.ui.TelaPropostasServidores
+import com.example.trampai.ui.propostas.PropostasViewModel
+import com.example.trampai.ui.propostas.PropostasViewModelFactory
+import com.example.trampai.ui.servicos.ServicosViewModel
+import com.example.trampai.ui.servicos.ServicosViewModelFactory
 
 @Composable
 fun AppNavigation() {
 
     val navController = rememberNavController()
-    val viewModel: MeuViewModel = viewModel()
+
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val servicoRepository = ServicoRepository(db.servicoDAO(), db.propostaDAO())
+    val propostaRepository = PropostaRepository(db.propostaDAO())
+
+    val servicosViewModel: ServicosViewModel = viewModel(
+        factory = ServicosViewModelFactory(servicoRepository)
+    )
+    val propostasViewModel: PropostasViewModel = viewModel(
+        factory = PropostasViewModelFactory(propostaRepository)
+    )
 
     NavHost(
         navController = navController,
@@ -37,7 +50,7 @@ fun AppNavigation() {
     ) {
 
         composable(Rotas.PRINCIPAL) {
-            MinhaTela(navController, viewModel)
+            MinhaTela(navController, servicosViewModel)
         }
 
         composable(
@@ -45,53 +58,33 @@ fun AppNavigation() {
             arguments = listOf(navArgument("servicoId") { type = NavType.IntType })
         ) { entry ->
             val id = entry.arguments?.getInt("servicoId") ?: 0
-            val db = AppDatabase.getDatabase(LocalContext.current)
 
-            var servico by remember { mutableStateOf<Servico?>(null) }
+            LaunchedEffect(id) { servicosViewModel.carregarServico(id) }
 
-            LaunchedEffect(id) {
-                servico = viewModel.buscarServicoPorId(db, id)   // dao.buscarPorId(id)
-                viewModel.carregarPropostas(db)                  // para contar as propostas
-            }
-
-            servico?.let { atual ->
-                TelaCheia {
-                    TelaDescricaoServico(
-                        servico = atual,
-                        qtdPropostas = viewModel.propostas.count { it.servicoId == atual.id },
-                        voltarParaInicio = { navController.popBackStack() },
-                        aoEnviarProposta = { proposta ->
-                            viewModel.adicionarProposta(db, proposta)
-                            navController.navigate(Rotas.PROPOSTAS)
-                        },
-                        aoSalvarEdicao = { editado ->
-                            servico = editado                       // mostra na hora
-                            viewModel.atualizarServico(db, editado) // grava no banco
-                        }
-                    )
-                }
+            TelaCheia {
+                TelaDescricaoServico(
+                    servicoId = id,
+                    servicosViewModel = servicosViewModel,
+                    propostasViewModel = propostasViewModel,
+                    voltarParaInicio = { navController.popBackStack() },
+                    irParaPropostas = { navController.navigate(Rotas.PROPOSTAS) }
+                )
             }
         }
 
         composable(Rotas.PROPOSTAS) {
-            val db = AppDatabase.getDatabase(LocalContext.current)
-
-
-            LaunchedEffect(Unit) {
-                viewModel.carregarPropostas(db)
-            }
+            val propostasState by propostasViewModel.uiState.collectAsState()
 
             TelaCheia {
                 TelaPropostasServidores(
-                    propostas = viewModel.propostas,
-                    aoRemover = { viewModel.removerProposta(db, it) },
+                    propostas = propostasState.listaDePropostas,
+                    aoRemover = { propostasViewModel.onDelete(it) },
                     voltarParaInicio = { navController.popBackStack() }
                 )
             }
         }
     }
 }
-
 
 @Composable
 private fun TelaCheia(conteudo: @Composable () -> Unit) {

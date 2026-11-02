@@ -1,4 +1,4 @@
-package com.example.trampai
+package com.example.trampai.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,23 +25,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.trampai.data.local.Servico
+import com.example.trampai.data.local.valorFormatado
+import com.example.trampai.ui.propostas.PropostasUiState
+import com.example.trampai.ui.propostas.PropostasViewModel
+import com.example.trampai.ui.servicos.ServicosUiState
+import com.example.trampai.ui.servicos.ServicosViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TelaDescricaoServico(
-    servico: Servico,
-    qtdPropostas: Int,
+    servicoId: Int,
+    servicosViewModel: ServicosViewModel,
+    propostasViewModel: PropostasViewModel,
     voltarParaInicio: () -> Unit,
-    aoEnviarProposta: (Proposta) -> Unit,
-    aoSalvarEdicao: (Servico) -> Unit
+    irParaPropostas: () -> Unit
 ) {
     val backgroundColor = Color(0xFFF8F9FD)
     val primaryColor = Color(0xFF6366F1)
     val textColorPrimary = Color(0xFF0F172A)
     val textColorSecondary = Color(0xFF64748B)
 
+    val servicosState by servicosViewModel.uiState.collectAsStateWithLifecycle()
+    val propostasState by propostasViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Só controlam se cada diálogo está aberto (estado visual, não de dados)
     var mostrarFormulario by remember { mutableStateOf(false) }
     var mostrarEdicao by remember { mutableStateOf(false) }
+
+    // DETALHE LENDO DO BANCO: o ViewModel busca o serviço pelo id que veio na rota
+    LaunchedEffect(servicoId) {
+        servicosViewModel.carregarServico(servicoId)
+    }
+
+    // Enquanto o serviço não chega do banco (ou se for de outro id), não desenha nada
+    val servico = servicosState.servicoSelecionado?.takeIf { it.id == servicoId } ?: return
+
+    // Combina as duas listas: conta as propostas que pertencem a este serviço
+    val qtdPropostas = propostasState.listaDePropostas.count { it.servicoId == servico.id }
 
     Column(
         modifier = Modifier
@@ -86,9 +108,12 @@ fun TelaDescricaoServico(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // EDITAR: abre o formulário de edição do serviço
+            // EDITAR: joga o serviço no formulário do ViewModel e abre o diálogo
             Surface(
-                onClick = { mostrarEdicao = true },
+                onClick = {
+                    servicosViewModel.onEdit(servico)
+                    mostrarEdicao = true
+                },
                 shape = CircleShape,
                 color = Color.White,
                 shadowElevation = 2.dp,
@@ -326,154 +351,120 @@ fun TelaDescricaoServico(
 
     if (mostrarEdicao) {
         DialogEditarServico(
-            servico = servico,
-            aoCancelar = { mostrarEdicao = false },
-            aoSalvar = {
-                mostrarEdicao = false
-                aoSalvarEdicao(it)
-            }
+            uiState = servicosState,
+            viewModel = servicosViewModel,
+            aoFechar = { mostrarEdicao = false }
         )
     }
 
     if (mostrarFormulario) {
         DialogProposta(
             servico = servico,
-            aoCancelar = { mostrarFormulario = false },
-            aoEnviar = {
+            uiState = propostasState,
+            viewModel = propostasViewModel,
+            aoFechar = { mostrarFormulario = false },
+            aoEnviado = {
                 mostrarFormulario = false
-                aoEnviarProposta(it)
+                irParaPropostas()
             }
         )
     }
 }
 
-// Formulário da proposta (aparece por cima da tela)
+// Formulário da proposta: os campos moram no PropostasUiState
 @Composable
 private fun DialogProposta(
     servico: Servico,
-    aoCancelar: () -> Unit,
-    aoEnviar: (Proposta) -> Unit
+    uiState: PropostasUiState,
+    viewModel: PropostasViewModel,
+    aoFechar: () -> Unit,
+    aoEnviado: () -> Unit
 ) {
-    var valor by remember { mutableStateOf("") }
-    var mensagem by remember { mutableStateOf("") }
-    var erro by remember { mutableStateOf("") }
-
     AlertDialog(
-        onDismissRequest = aoCancelar,
+        onDismissRequest = {
+            viewModel.onCancelar()
+            aoFechar()
+        },
         title = { Text("Nova proposta") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(servico.titulo, fontWeight = FontWeight.Bold)
 
                 OutlinedTextField(
-                    value = valor,
-                    onValueChange = { valor = it },
+                    value = uiState.valor,
+                    onValueChange = viewModel::onValorChange,
                     label = { Text("Seu valor por hora (R$)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
                 OutlinedTextField(
-                    value = mensagem,
-                    onValueChange = { mensagem = it },
+                    value = uiState.mensagem,
+                    onValueChange = viewModel::onMensagemChange,
                     label = { Text("Mensagem") },
                     minLines = 3
                 )
 
-                if (erro.isNotEmpty()) {
-                    Text(erro, color = Color(0xFFD32F2F), fontSize = 13.sp)
+                if (uiState.erro.isNotEmpty()) {
+                    Text(uiState.erro, color = Color(0xFFD32F2F), fontSize = 13.sp)
                 }
             }
         },
         confirmButton = {
             Button(onClick = {
-                val v = valor.replace(",", ".").toDoubleOrNull()
-                if (v == null || v <= 0) {
-                    erro = "Informe um valor válido, ex: 90 ou 90,50."
-                } else {
-                    aoEnviar(
-                        Proposta(
-                            id = 0, // o ViewModel define o id
-                            servicoId = servico.id,
-                            servicoTitulo = servico.titulo,
-                            profissional = "Alex Souza",
-                            valorHora = v,
-                            mensagem = mensagem.trim()
-                        )
-                    )
-                }
+                // onEnviar devolve true quando o formulário é válido
+                if (viewModel.onEnviar(servico)) aoEnviado()
             }) { Text("Enviar") }
         },
         dismissButton = {
-            TextButton(onClick = aoCancelar) { Text("Cancelar") }
+            TextButton(onClick = {
+                viewModel.onCancelar()
+                aoFechar()
+            }) { Text("Cancelar") }
         }
     )
 }
 
-
-// Formulário de edição do serviço (já vem preenchido com os dados atuais)
+// Formulário de edição: usa os mesmos campos do ServicosUiState
 @Composable
 private fun DialogEditarServico(
-    servico: Servico,
-    aoCancelar: () -> Unit,
-    aoSalvar: (Servico) -> Unit
+    uiState: ServicosUiState,
+    viewModel: ServicosViewModel,
+    aoFechar: () -> Unit
 ) {
-    var titulo by remember { mutableStateOf(servico.titulo) }
-    var categoria by remember { mutableStateOf(servico.categoria) }
-    var valor by remember {
-        mutableStateOf(
-            if (servico.valorHora % 1.0 == 0.0) servico.valorHora.toInt().toString()
-            else servico.valorHora.toString()
-        )
-    }
-    var descricao by remember { mutableStateOf(servico.descricao) }
-    var requisitos by remember { mutableStateOf(servico.requisitos) }
-    var localizacao by remember { mutableStateOf(servico.localizacao) }
-    var erro by remember { mutableStateOf("") }
-
     AlertDialog(
-        onDismissRequest = aoCancelar,
+        onDismissRequest = {
+            viewModel.onCancelar()
+            aoFechar()
+        },
         title = { Text("Editar serviço") },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                CampoEdicao("Título", titulo) { titulo = it }
-                CampoEdicao("Categoria", categoria) { categoria = it }
-                CampoEdicao("Valor por hora (R$)", valor, KeyboardType.Decimal) { valor = it }
-                CampoEdicao("Descrição", descricao, linhas = 3) { descricao = it }
-                CampoEdicao("Requisitos", requisitos) { requisitos = it }
-                CampoEdicao("Localização", localizacao) { localizacao = it }
+                CampoEdicao("Título", uiState.titulo, viewModel::onTituloChange)
+                CampoEdicao("Categoria", uiState.categoria, viewModel::onCategoriaChange)
+                CampoEdicao("Valor por hora (R$)", uiState.valor, viewModel::onValorChange, KeyboardType.Decimal)
+                CampoEdicao("Descrição", uiState.descricao, viewModel::onDescricaoChange, linhas = 3)
+                CampoEdicao("Requisitos", uiState.requisitos, viewModel::onRequisitosChange)
+                CampoEdicao("Localização", uiState.localizacao, viewModel::onLocalizacaoChange)
 
-                if (erro.isNotEmpty()) {
-                    Text(erro, color = Color(0xFFD32F2F), fontSize = 13.sp)
+                if (uiState.erro.isNotEmpty()) {
+                    Text(uiState.erro, color = Color(0xFFD32F2F), fontSize = 13.sp)
                 }
             }
         },
         confirmButton = {
             Button(onClick = {
-                val v = valor.replace(",", ".").toDoubleOrNull()
-                if (titulo.isBlank() || categoria.isBlank()) {
-                    erro = "Preencha o título e a categoria."
-                } else if (v == null || v <= 0) {
-                    erro = "Informe um valor válido, ex: 50 ou 50,50."
-                } else {
-                    aoSalvar(
-                        servico.copy(
-                            titulo = titulo.trim(),
-                            categoria = categoria.trim(),
-                            valorHora = v,
-                            descricao = descricao.trim(),
-                            requisitos = requisitos.trim(),
-                            localizacao = localizacao.trim().ifBlank { "Local não informado" }
-                        )
-                    )
-                }
+                if (viewModel.onSave()) aoFechar()
             }) { Text("Salvar") }
         },
         dismissButton = {
-            TextButton(onClick = aoCancelar) { Text("Cancelar") }
+            TextButton(onClick = {
+                viewModel.onCancelar()
+                aoFechar()
+            }) { Text("Cancelar") }
         }
     )
 }
@@ -482,9 +473,9 @@ private fun DialogEditarServico(
 private fun CampoEdicao(
     nome: String,
     valor: String,
+    aoMudar: (String) -> Unit,
     teclado: KeyboardType = KeyboardType.Text,
-    linhas: Int = 1,
-    aoMudar: (String) -> Unit
+    linhas: Int = 1
 ) {
     OutlinedTextField(
         value = valor,
