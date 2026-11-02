@@ -22,10 +22,10 @@ import com.example.trampai.data.repository.PropostaRepository
 import com.example.trampai.data.repository.ServicoRepository
 import com.example.trampai.ui.TelaDescricaoServico
 import com.example.trampai.ui.TelaPropostasServidores
-import com.example.trampai.ui.propostas.PropostasViewModel
-import com.example.trampai.ui.propostas.PropostasViewModelFactory
-import com.example.trampai.ui.servicos.ServicosViewModel
-import com.example.trampai.ui.servicos.ServicosViewModelFactory
+import com.example.trampai.viewmodel.propostas.PropostasViewModel
+import com.example.trampai.viewmodel.propostas.PropostasViewModelFactory
+import com.example.trampai.viewmodel.servicos.ServicosViewModel
+import com.example.trampai.viewmodel.servicos.ServicosViewModelFactory
 
 @Composable
 fun AppNavigation() {

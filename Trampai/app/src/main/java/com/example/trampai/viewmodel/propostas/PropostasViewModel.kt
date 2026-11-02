@@ -1,4 +1,4 @@
-package com.example.trampai.ui.propostas
+package com.example.trampai.viewmodel.propostas
 
 import android.util.Log
 import androidx.lifecycle.ViewModel

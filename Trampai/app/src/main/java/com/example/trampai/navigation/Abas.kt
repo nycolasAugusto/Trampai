@@ -7,7 +7,7 @@ import com.example.trampai.ui.TelaCriarServico
 import com.example.trampai.ui.TelaPerfil
 import com.example.trampai.ui.TelaServicoRelampago
 import com.example.trampai.ui.TelaHome
-import com.example.trampai.ui.servicos.ServicosViewModel
+import com.example.trampai.viewmodel.servicos.ServicosViewModel
 
 @Composable
 fun AbaInicio(

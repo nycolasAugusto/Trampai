@@ -8,7 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.trampai.ui.servicos.ServicosViewModel
+import com.example.trampai.viewmodel.servicos.ServicosViewModel
 
 
 // Container das abas: tem a barra inferior e um NavHost próprio (navInterno).

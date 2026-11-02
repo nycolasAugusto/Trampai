@@ -1,4 +1,4 @@
-package com.example.trampai.ui.servicos
+package com.example.trampai.viewmodel.servicos
 
 
 import androidx.lifecycle.ViewModel

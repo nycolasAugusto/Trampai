@@ -28,10 +28,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.trampai.data.local.Servico
 import com.example.trampai.data.local.valorFormatado
-import com.example.trampai.ui.propostas.PropostasUiState
-import com.example.trampai.ui.propostas.PropostasViewModel
-import com.example.trampai.ui.servicos.ServicosUiState
-import com.example.trampai.ui.servicos.ServicosViewModel
+import com.example.trampai.viewmodel.propostas.PropostasUiState
+import com.example.trampai.viewmodel.propostas.PropostasViewModel
+import com.example.trampai.viewmodel.servicos.ServicosUiState
+import com.example.trampai.viewmodel.servicos.ServicosViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

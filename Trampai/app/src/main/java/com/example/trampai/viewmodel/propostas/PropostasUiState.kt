@@ -1,4 +1,4 @@
-package com.example.trampai.ui.propostas
+package com.example.trampai.viewmodel.propostas
 
 import com.example.trampai.data.local.Proposta
 
