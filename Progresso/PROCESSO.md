@@ -565,4 +565,207 @@ Na apresentação anterior, o professor observou que, no nosso app, **quem cria 
 - **Perfil e Urgente com dados reais.** Continuam com dados de exemplo.
 
 ---
+---
 
+# Trabalho 4: arquitetura MVVM com Repository
+
+No Trabalho 3 o app já gravava tudo no Room, mas as telas ainda conversavam direto com o banco. Neste trabalho **reorganizamos o código em camadas** (MVVM) sem mudar nada do que o usuário vê: nenhuma tela nova, nenhum campo novo, nenhuma funcionalidade nova. O app continua adicionando, listando, atualizando, removendo e persistindo, só que agora cada coisa mora no lugar certo.
+
+---
+
+## 1. Como estava o projeto no Trabalho 3 e o que mudou
+
+| | Trabalho 3 | Trabalho 4 |
+|---|---|---|
+| **Quem chama o DAO** | A tela, passando o `db` para o `MeuViewModel` | Só o Repository chama o DAO; só o ViewModel chama o Repository |
+| **ViewModel** | Um só, `MeuViewModel`, com as duas listas e todas as operações | Um por entidade: `ServicosViewModel` e `PropostasViewModel` |
+| **Estado da tela** | `mutableStateListOf` e vários `remember` soltos nas telas | Uma `data class ...UiState` por tela, dentro de um `StateFlow` |
+| **Buscar dados** | `LaunchedEffect(Unit)` chamando `carregarServicos(db)` | O DAO devolve `Flow<List<...>>` e a lista se atualiza sozinha |
+| **Recarregar a lista** | Depois de cada inserir/atualizar/remover, buscava tudo de novo na mão | Não precisa mais: o Room avisa o Flow quando a tabela muda |
+| **Corrotinas** | `CoroutineScope(Dispatchers.IO).launch` dentro do ViewModel | `viewModelScope.launch` |
+| **Criar o ViewModel** | `viewModel()` simples | `viewModel(factory = ...ViewModelFactory(repository))` |
+| **Pacotes** | Arquivos soltos | `ui`, `data`, `data.repository` e `viewmodel` |
+
+O `MeuViewModel` foi **substituído** pelos dois novos e apagado do projeto.
+
+> **[ESPAÇO PARA FOTO]** Painel de arquivos do projeto no Trabalho 3 (antes), com tudo junto.
+>
+> <!-- <img src="materiaisProgesso/T4_EstruturaAntes.png" alt="Estrutura antes" width="320"> -->
+
+> **[ESPAÇO PARA FOTO]** Painel de arquivos do projeto agora (depois), com os pacotes.
+>
+> <!-- <img src="materiaisProgesso/T4_EstruturaDepois.png" alt="Estrutura depois" width="320"> -->
+
+---
+
+## 2. Como dividimos os pacotes
+
+| Pacote | O que tem | Regra |
+|---|---|---|
+| `ui` | As telas (`TelaHome`, `TelaCriarServico`, `TelaDescricaoServico`, `TelaPropostasServidores`...), o tema e a `MainActivity` | Só desenha e chama métodos do ViewModel. Nada de `dao`, `CoroutineScope` ou `Dispatchers.IO` |
+| `navigation` | `AppNavigation`, `MinhaTela`, abas, barra inferior e `Rotas` | Cria os ViewModels com a Factory e entrega às telas |
+| `data` (`data.local`) | `Servico` e `Proposta` (`@Entity`), `ServicoDAO` e `PropostaDAO` (`@Dao`) e o `AppDatabase` | Igual ao Trabalho 3, mudando só o retorno de `buscarTodos()` para `Flow` |
+| `data.repository` | `ServicoRepository` e `PropostaRepository` | Único que fala com o DAO |
+| `viewmodel` | `ServicosViewModel`, `PropostasViewModel`, os dois `UiState` e as duas `ViewModelFactory` | Guarda o estado da tela e as ações do usuário |
+
+Escolhemos manter a pasta `navigation` separada porque ela não é tela nem dado: só liga as peças.
+
+**[PREENCHER]** Como o trio decidiu isso (conversa, quem sugeriu, se mudaram de ideia no meio).
+
+---
+
+## 3. Por que o Repository existe
+
+Antes, a tela (e o ViewModel) falavam direto com o `@Dao`. Isso misturava duas coisas: **de onde vêm os dados** e **o que a tela faz com eles**. O Repository separa as duas.
+
+```kotlin
+class ServicoRepository(
+    private val servicoDAO: ServicoDAO,
+    private val propostaDAO: PropostaDAO
+) {
+    fun getAllServicos(): Flow<List<Servico>> = servicoDAO.buscarTodos()
+    suspend fun buscarPorId(id: Int): Servico? = servicoDAO.buscarPorId(id)
+    suspend fun inserir(servico: Servico) = servicoDAO.inserir(servico)
+    suspend fun atualizar(servico: Servico) = servicoDAO.atualizar(servico)
+    suspend fun deletar(servico: Servico) { /* apaga as propostas do serviço e depois o serviço */ }
+}
+```
+
+O que isso resolve:
+
+- **Um só ponto de acesso aos dados.** Se um dia os dados vierem de uma API além do Room, só o Repository muda. ViewModel e tela continuam intactos.
+- **A regra "remover serviço remove as propostas" fica num lugar só.** Antes ela estava espalhada no `MeuViewModel`; agora o `ServicoRepository` recebe os dois DAOs e cuida disso.
+- **O ViewModel fica testável.** Ele recebe o Repository no construtor, então dá para trocar por um falso nos testes.
+
+---
+
+## 4. O que tem dentro de cada UiState
+
+A ideia do `UiState` é juntar **tudo o que a tela precisa para se desenhar** num único objeto, em vez de várias variáveis soltas.
+
+### `ServicosUiState`
+
+| Campo | Para que serve |
+|---|---|
+| `listaDeServicos` | A lista que a aba *Início* mostra. Vem do Flow do Repository |
+| `servicoSelecionado` | O serviço aberto na *Descrição* (buscado pelo id da rota) |
+| `servicoEmEdicao` | Se tem valor, o formulário está editando; se é nulo, está criando |
+| `titulo`, `categoria`, `valor`, `descricao`, `requisitos`, `localizacao` | O texto digitado no formulário de criar/editar |
+| `erro` | A mensagem de validação ("Informe o título do serviço."...) |
+
+### `PropostasUiState`
+
+| Campo | Para que serve |
+|---|---|
+| `listaDePropostas` | A lista da tela de propostas e a contagem na *Descrição* |
+| `valor`, `mensagem` | O texto digitado no formulário de proposta |
+| `erro` | A mensagem de validação do valor |
+
+**Por que esses campos.** Cada campo existe porque a tela precisa dele para se desenhar: ou é dado vindo do banco (as listas e o item selecionado), ou é o que o usuário está digitando (o formulário), ou é um aviso (o erro). Os textos do formulário ficaram no `UiState` e não em `remember` dentro da tela para que o estado sobreviva a recomposições e a tela fique só com a parte visual.
+
+### Como o ViewModel expõe o estado
+
+```kotlin
+private val _uiState = MutableStateFlow(ServicosUiState())
+val uiState: StateFlow<ServicosUiState> = _uiState.asStateFlow()
+```
+
+A versão privada só o ViewModel altera. A pública é só leitura: a tela observa e nunca modifica direto. As ações têm nome de intenção do usuário: `onTituloChange`, `onSave`, `onEdit`, `onDelete`, `onCancelar`, `onEnviar`.
+
+### A busca reativa com Flow
+
+```kotlin
+// no DAO (repare: não é mais suspend)
+@Query("SELECT * FROM servicos ORDER BY id DESC")
+fun buscarTodos(): Flow<List<Servico>>
+
+// no ViewModel, uma vez só, no init
+viewModelScope.launch {
+    repository.getAllServicos().collect { servicos ->
+        _uiState.update { it.copy(listaDeServicos = servicos) }
+    }
+}
+```
+
+Inserir, atualizar ou remover muda a tabela, e o Room atualiza o Flow sozinho. Por isso sumiram os `carregarServicos(db)` e os `LaunchedEffect(Unit)` de buscar.
+
+### A Factory
+
+O Android não sabe criar um ViewModel que recebe o Repository no construtor, então cada ViewModel tem uma Factory:
+
+```kotlin
+val servicosViewModel: ServicosViewModel = viewModel(
+    factory = ServicosViewModelFactory(servicoRepository)
+)
+```
+
+> **[ESPAÇO PARA FOTO]** `ServicosUiState` e `ServicosViewModel` abertos no Android Studio.
+>
+> <!-- <img src="materiaisProgesso/T4_ViewModel.png" alt="ServicosViewModel" width="520"> -->
+
+---
+
+## 5. O app funcionando
+
+O app precisa continuar fazendo exatamente o que fazia no Trabalho 3. Testamos cada operação depois da reorganização:
+
+| Funcionalidade | Passou? |
+|---|---|
+| Criar serviço | [PREENCHER] |
+| Listar serviços (a lista atualiza sozinha) | [PREENCHER] |
+| Editar serviço | [PREENCHER] |
+| Remover serviço (e as propostas dele) | [PREENCHER] |
+| Abrir o detalhe de um serviço | [PREENCHER] |
+| Enviar proposta | [PREENCHER] |
+| Remover proposta | [PREENCHER] |
+| Fechar o app e reabrir: os dados continuam? | [PREENCHER] |
+
+> **[ESPAÇO PARA VÍDEO]** Gravação curta mostrando criar, editar, remover, enviar proposta e reabrir o app.
+>
+> <!-- [Assistir ao teste do MVVM](materiaisProgesso/T4_MVVM.mp4) -->
+
+> **[ESPAÇO PARA FOTO]** Aba *Início* com serviços, funcionando depois da reorganização.
+>
+> <!-- <img src="materiaisProgesso/T4_InicioFuncionando.png" alt="Início funcionando" width="280"> -->
+
+---
+
+## 6. O que quebrou na reorganização e como corrigimos
+
+Ao mover tudo para as camadas novas, o projeto passou a ter dezenas de erros de compilação. Os principais:
+
+- **`AppNavigation.kt` com chaves sobrando.** Na rota da *Descrição* sobraram um `)` e um `}` depois do `TelaCheia`, o que fechava o `NavHost` antes da hora. O erro "Expecting an element" na linha 86 gerou uma cascata de 19 problemas ("Unresolved reference 'composable'", "@Composable invocations can only happen..."). Corrigindo essa linha, os erros em cascata sumiram.
+- **`MeuViewModel` ainda em uso.** Mesmo com os ViewModels novos criados, o `AppNavigation`, a `MinhaTela` e o `Abas.kt` ainda recebiam e usavam o `MeuViewModel` com o `db` passado para as telas. Fomos arquivo por arquivo trocando para `ServicosViewModel` e `PropostasViewModel`, e só depois apagamos o `MeuViewModel.kt`.
+- **Assinaturas das telas mudaram.** `TelaHome` e `TelaCriarServico` passaram a receber o ViewModel, e o `aoPublicar` virou `() -> Unit`, já que o ViewModel monta e salva o serviço sozinho. As chamadas nas abas deram erro ("No parameter with name 'servicos' found") até serem atualizadas.
+- **Imports antigos.** Várias telas passaram para o pacote `ui` e os imports `com.example.trampai.TelaX` ficaram "Unresolved reference". Trocamos para `com.example.trampai.ui.TelaX`.
+- **Regra de remover serviço + propostas.** No `MeuViewModel`, o `removerServico` apagava as propostas antes do serviço. Essa regra foi para dentro do `ServicoRepository.deletar`, para não ficarem propostas órfãs no banco.
+
+**Como encontramos os erros:** o Android Studio listou os problemas por arquivo (aba *Problems*), e seguimos do primeiro erro de sintaxe para os de referência. Também pesquisamos `MeuViewModel` no projeto inteiro (Ctrl+Shift+F) para garantir que nada ainda dependia dele.
+
+> **[ESPAÇO PARA FOTO]** O painel de erros do `AppNavigation.kt` antes de corrigir (os 19 problemas).
+>
+> <!-- <img src="materiaisProgesso/T4_ErrosAntes.png" alt="Erros do AppNavigation" width="520"> -->
+
+> **[ESPAÇO PARA FOTO]** O projeto compilando sem erros depois da correção.
+>
+> <!-- <img src="materiaisProgesso/T4_SemErros.png" alt="Projeto sem erros" width="520"> -->
+
+---
+
+## 7. Dificuldades do trio
+
+**[PREENCHER]** Escrevam por integrante, com as próprias palavras. Pontos que podem entrar:
+
+- Entender a diferença entre `StateFlow` privado (`_uiState`) e público (`uiState`).
+- Entender por que o `Flow` dispensa recarregar a lista, e por que o `buscarTodos()` deixou de ser `suspend`.
+- Entender por que o ViewModel com parâmetro precisa de Factory.
+- Achar e corrigir os erros de navegação e de import depois de mover os arquivos.
+
+---
+
+## 8. O que ainda não fizemos
+
+- **Contas de usuário** (continua um usuário fixo, "Alex Souza", como explicado no Trabalho 3).
+- **Edição de propostas.**
+- **Tela própria para cada proposta**, com aceitar e recusar.
+- **Perfil e Urgente com dados reais.**
